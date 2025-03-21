@@ -1,12 +1,8 @@
 package tn.fst.spring.backend_pfs_s2.model;
 
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -14,6 +10,12 @@ import java.util.List;
 public class Administrateur extends Utilisateur {
     private String fonction;
 
-    @OneToMany(mappedBy = "administrateur")
-    private List<SessionExamen> sessions;
+    // Constructeur par défaut
+    public Administrateur() {}
+
+    // Constructeur avec paramètres
+    public Administrateur(String nom, String prenom, String email, String motDePasse, String telephone, String fonction) {
+        super(nom, prenom, email, motDePasse, telephone);
+        this.fonction = fonction;
+    }
 }

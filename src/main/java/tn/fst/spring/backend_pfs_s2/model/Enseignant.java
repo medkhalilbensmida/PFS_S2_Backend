@@ -23,4 +23,15 @@ public class Enseignant extends Utilisateur {
 
     @OneToMany(mappedBy = "enseignant")
     private List<Enseigne> enseignes;
+
+    // Constructeur par défaut
+    public Enseignant() {}
+
+    // Constructeur avec paramètres
+    public Enseignant(String nom, String prenom, String email, String motDePasse, String telephone, String grade, String departement, Boolean estDisponible) {
+        super(nom, prenom, email, motDePasse, telephone);
+        this.grade = grade;
+        this.departement = departement;
+        this.estDisponible = estDisponible;
+    }
 }

@@ -19,4 +19,15 @@ public class Salle {
 
     @OneToMany(mappedBy = "salle")
     private List<Surveillance> surveillances;
+
+    // Constructeur par défaut
+    public Salle() {}
+
+    // Constructeur avec paramètres
+    public Salle(String numero, Integer capacite, String batiment, String etage) {
+        this.numero = numero;
+        this.capacite = capacite;
+        this.batiment = batiment;
+        this.etage = etage;
+    }
 }

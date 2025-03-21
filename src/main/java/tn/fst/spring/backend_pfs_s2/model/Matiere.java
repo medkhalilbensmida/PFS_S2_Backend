@@ -1,6 +1,5 @@
 package tn.fst.spring.backend_pfs_s2.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,4 +19,15 @@ public class Matiere {
 
     @OneToMany(mappedBy = "matiere")
     private List<Enseigne> enseignes;
+
+    // Constructeur par défaut
+    public Matiere() {}
+
+    // Constructeur avec paramètres
+    public Matiere(String niveau, String section, String code, String nom) {
+        this.niveau = niveau;
+        this.section = section;
+        this.code = code;
+        this.nom = nom;
+    }
 }

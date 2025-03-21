@@ -19,4 +19,14 @@ public class AnneeUniversitaire {
 
     @OneToMany(mappedBy = "annee")
     private List<SessionExamen> sessions;
+
+    // Constructeur par défaut
+    public AnneeUniversitaire() {}
+
+    // Constructeur avec paramètres
+    public AnneeUniversitaire(Date dateDebut, Date dateFin, Boolean estActive) {
+        this.dateDebut = dateDebut;
+        this.dateFin = dateFin;
+        this.estActive = estActive;
+    }
 }

@@ -26,4 +26,17 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "surveillance_id")
     private Surveillance surveillance;
+
+    // Constructeur par défaut
+    public Notification() {}
+
+    // Constructeur avec paramètres
+    public Notification(String message, Date dateEnvoi, Boolean estLue, TypeNotification type, Enseignant destinataire, Surveillance surveillance) {
+        this.message = message;
+        this.dateEnvoi = dateEnvoi;
+        this.estLue = estLue;
+        this.type = type;
+        this.destinataire = destinataire;
+        this.surveillance = surveillance;
+    }
 }

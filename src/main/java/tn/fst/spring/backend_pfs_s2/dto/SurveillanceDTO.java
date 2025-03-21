@@ -2,7 +2,6 @@ package tn.fst.spring.backend_pfs_s2.dto;
 
 import lombok.Data;
 import tn.fst.spring.backend_pfs_s2.model.StatutSurveillance;
-import tn.fst.spring.backend_pfs_s2.model.TypeSurveillance;
 
 import java.util.Date;
 
@@ -12,7 +11,6 @@ public class SurveillanceDTO {
     private Date dateDebut;
     private Date dateFin;
     private StatutSurveillance statut;
-    private TypeSurveillance type;
     private Long salleId;
     private Long matiereId;
     private Long enseignantPrincipalId;

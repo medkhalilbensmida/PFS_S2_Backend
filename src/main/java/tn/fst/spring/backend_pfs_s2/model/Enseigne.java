@@ -27,4 +27,16 @@ public class Enseigne {
 
     @Enumerated(EnumType.STRING)
     private TypeMatiere typeMatiere;
+
+    // Constructeur par défaut
+    public Enseigne() {}
+
+    // Constructeur avec paramètres
+    public Enseigne(Enseignant enseignant, Matiere matiere, Semestre numSemestre, AnneeUniversitaire annee, TypeMatiere typeMatiere) {
+        this.enseignant = enseignant;
+        this.matiere = matiere;
+        this.numSemestre = numSemestre;
+        this.annee = annee;
+        this.typeMatiere = typeMatiere;
+    }
 }

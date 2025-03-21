@@ -54,7 +54,6 @@ public class SurveillanceController {
         dto.setDateDebut(surveillance.getDateDebut());
         dto.setDateFin(surveillance.getDateFin());
         dto.setStatut(surveillance.getStatut());
-        dto.setType(surveillance.getType());
         dto.setSalleId(surveillance.getSalle().getId());
         dto.setMatiereId(surveillance.getMatiere().getId());
         dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal().getId());
@@ -69,7 +68,6 @@ public class SurveillanceController {
         surveillance.setDateDebut(dto.getDateDebut());
         surveillance.setDateFin(dto.getDateFin());
         surveillance.setStatut(dto.getStatut());
-        surveillance.setType(dto.getType());
         // Vous devez récupérer les entités associées par leurs IDs ici
         return surveillance;
     }

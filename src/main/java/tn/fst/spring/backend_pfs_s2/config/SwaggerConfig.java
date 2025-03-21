@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI springShopOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Ski Station API")
-                        .description("API pour la gestion d'une station de ski")
+                        .title("Gestion des surveillances dans le DSI")
+                        .description("API pour la gestion des surveillances dans le DSI")
                         .version("1.0"));
     }
 }

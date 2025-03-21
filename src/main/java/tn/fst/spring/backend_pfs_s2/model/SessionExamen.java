@@ -28,10 +28,19 @@ public class SessionExamen {
     @Enumerated(EnumType.STRING)
     private Semestre numSemestre;
 
-    @ManyToOne
-    @JoinColumn(name = "administrateur_id")
-    private Administrateur administrateur;
-
     @OneToMany(mappedBy = "sessionExamen")
     private List<Surveillance> surveillances;
+
+    // Constructeur par défaut
+    public SessionExamen() {}
+
+    // Constructeur avec paramètres
+    public SessionExamen(Date dateDebut, Date dateFin, TypeSession type, Boolean estActive, AnneeUniversitaire annee, Semestre numSemestre) {
+        this.dateDebut = dateDebut;
+        this.dateFin = dateFin;
+        this.type = type;
+        this.estActive = estActive;
+        this.annee = annee;
+        this.numSemestre = numSemestre;
+    }
 }

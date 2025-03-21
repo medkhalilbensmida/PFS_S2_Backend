@@ -1,6 +1,5 @@
 package tn.fst.spring.backend_pfs_s2.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,9 +18,6 @@ public class Surveillance {
 
     @Enumerated(EnumType.STRING)
     private StatutSurveillance statut;
-
-    @Enumerated(EnumType.STRING)
-    private TypeSurveillance type;
 
     @ManyToOne
     @JoinColumn(name = "salle_id")
@@ -45,4 +41,19 @@ public class Surveillance {
 
     @OneToMany(mappedBy = "surveillance")
     private List<Notification> notifications;
+
+    // Constructeur par défaut
+    public Surveillance() {}
+
+    // Constructeur avec paramètres
+    public Surveillance(Date dateDebut, Date dateFin, StatutSurveillance statut, Salle salle, Matiere matiere, Enseignant enseignantPrincipal, Enseignant enseignantSecondaire, SessionExamen sessionExamen) {
+        this.dateDebut = dateDebut;
+        this.dateFin = dateFin;
+        this.statut = statut;
+        this.salle = salle;
+        this.matiere = matiere;
+        this.enseignantPrincipal = enseignantPrincipal;
+        this.enseignantSecondaire = enseignantSecondaire;
+        this.sessionExamen = sessionExamen;
+    }
 }
