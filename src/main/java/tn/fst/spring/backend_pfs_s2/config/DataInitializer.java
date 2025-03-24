@@ -1,5 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.config;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import tn.fst.spring.backend_pfs_s2.model.*;
 import tn.fst.spring.backend_pfs_s2.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private MatiereRepository matiereRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private SalleRepository salleRepository;
@@ -98,6 +102,7 @@ public class DataInitializer implements CommandLineRunner {
 
         for (Administrateur admin : administrateurs) {
             if (administrateurRepository.findByEmail(admin.getEmail()).isEmpty()) {
+                admin.setMotDePasse(passwordEncoder.encode(admin.getMotDePasse())); // Encoder le mot de passe
                 administrateurRepository.save(admin);
             }
         }
@@ -119,6 +124,7 @@ public class DataInitializer implements CommandLineRunner {
 
         for (Enseignant enseignant : enseignants) {
             if (enseignantRepository.findByEmail(enseignant.getEmail()).isEmpty()) {
+                enseignant.setMotDePasse(passwordEncoder.encode(enseignant.getMotDePasse())); // Encoder le mot de passe
                 enseignantRepository.save(enseignant);
             }
         }
