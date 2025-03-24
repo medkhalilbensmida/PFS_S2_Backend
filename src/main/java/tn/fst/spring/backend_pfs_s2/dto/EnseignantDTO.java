@@ -12,5 +12,4 @@ public class EnseignantDTO {
     private String telephone;
     private String grade;
     private String departement;
-    private Boolean estDisponible;
 }

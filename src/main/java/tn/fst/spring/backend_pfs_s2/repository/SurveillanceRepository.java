@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface SurveillanceRepository extends JpaRepository<Surveillance, Long> {
     List<Surveillance> findByDateDebutAndDateFin(Date dateDebut, Date dateFin);
-
+    boolean existsByDateDebutAndDateFin(Date dateDebut, Date dateFin); // Add this method
 }

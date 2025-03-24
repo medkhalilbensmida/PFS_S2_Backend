@@ -57,7 +57,6 @@ public class EnseignantController {
         dto.setTelephone(enseignant.getTelephone());
         dto.setGrade(enseignant.getGrade());
         dto.setDepartement(enseignant.getDepartement());
-        dto.setEstDisponible(enseignant.getEstDisponible());
         return dto;
     }
 
@@ -70,7 +69,6 @@ public class EnseignantController {
         enseignant.setTelephone(dto.getTelephone());
         enseignant.setGrade(dto.getGrade());
         enseignant.setDepartement(dto.getDepartement());
-        enseignant.setEstDisponible(dto.getEstDisponible());
         return enseignant;
     }
 }

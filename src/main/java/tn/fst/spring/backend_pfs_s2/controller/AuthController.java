@@ -75,8 +75,7 @@ public class AuthController {
                     passwordEncoder.encode(signupRequest.getMotDePasse()),
                     signupRequest.getTelephone(),
                     signupRequest.getGrade(),
-                    signupRequest.getDepartement(),
-                    signupRequest.getEstDisponible()
+                    signupRequest.getDepartement()
             );
             enseignantRepository.save(enseignant);
         } else {
@@ -85,4 +84,5 @@ public class AuthController {
 
         return ResponseEntity.ok("User registered successfully");
     }
+
 }

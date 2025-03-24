@@ -46,6 +46,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private DisponibiliteEnseignantRepository disponibiliteRepository;
+
     @Override
     public void run(String... args) throws Exception {
         // Insérer des données uniquement si elles n'existent pas déjà
@@ -58,7 +61,26 @@ public class DataInitializer implements CommandLineRunner {
         insertSurveillances();
         insertEnseignes();
         insertNotifications();
+        initDisponibilitesForAllSurveillances();
     }
+
+    private void initDisponibilitesForAllSurveillances() {
+        List<Surveillance> surveillances = surveillanceRepository.findAll();
+        List<Enseignant> enseignants = enseignantRepository.findAll();
+
+        for (Surveillance surveillance : surveillances) {
+            for (Enseignant enseignant : enseignants) {
+                if (!disponibiliteRepository.existsByEnseignantAndSurveillance(enseignant, surveillance)) {
+                    DisponibiliteEnseignant disponibilite = new DisponibiliteEnseignant();
+                    disponibilite.setEnseignant(enseignant);
+                    disponibilite.setSurveillance(surveillance);
+                    disponibilite.setEstDisponible(false); // Initialement non disponible
+                    disponibiliteRepository.save(disponibilite);
+                }
+            }
+        }
+    }
+
     private void insertSurveillances() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         List<SessionExamen> sessions = sessionExamenRepository.findAll();
@@ -66,26 +88,49 @@ public class DataInitializer implements CommandLineRunner {
         List<Matiere> matieres = matiereRepository.findAll();
         List<Enseignant> enseignants = enseignantRepository.findAll();
 
-        // Création de 10 surveillances avec des enseignants, salles, matières et sessions variés
+        // Création des surveillances sans enseignants initialement
         List<Surveillance> surveillances = Arrays.asList(
-                new Surveillance(dateFormat.parse("2023-12-15 09:00"), dateFormat.parse("2023-12-15 11:00"), StatutSurveillance.PLANIFIEE, salles.get(0), matieres.get(0), enseignants.get(0), enseignants.get(1), sessions.get(0)),
-                new Surveillance(dateFormat.parse("2023-12-15 14:00"), dateFormat.parse("2023-12-15 16:00"), StatutSurveillance.PLANIFIEE,  salles.get(1), matieres.get(1), enseignants.get(2), enseignants.get(3), sessions.get(0)),
-                new Surveillance(dateFormat.parse("2023-12-16 09:00"), dateFormat.parse("2023-12-16 11:00"), StatutSurveillance.PLANIFIEE,  salles.get(2), matieres.get(2), enseignants.get(4), enseignants.get(5), sessions.get(1)),
-                new Surveillance(dateFormat.parse("2023-12-16 14:00"), dateFormat.parse("2023-12-16 16:00"), StatutSurveillance.PLANIFIEE,  salles.get(3), matieres.get(3), enseignants.get(6), enseignants.get(7), sessions.get(1)),
-                new Surveillance(dateFormat.parse("2023-12-17 09:00"), dateFormat.parse("2023-12-17 11:00"), StatutSurveillance.PLANIFIEE,  salles.get(4), matieres.get(4), enseignants.get(8), enseignants.get(9), sessions.get(2)),
-                new Surveillance(dateFormat.parse("2023-12-17 14:00"), dateFormat.parse("2023-12-17 16:00"), StatutSurveillance.PLANIFIEE,  salles.get(5), matieres.get(5), enseignants.get(0), enseignants.get(2), sessions.get(2)),
-                new Surveillance(dateFormat.parse("2023-12-18 09:00"), dateFormat.parse("2023-12-18 11:00"), StatutSurveillance.PLANIFIEE,  salles.get(6), matieres.get(6), enseignants.get(1), enseignants.get(3), sessions.get(3)),
-                new Surveillance(dateFormat.parse("2023-12-18 14:00"), dateFormat.parse("2023-12-18 16:00"), StatutSurveillance.PLANIFIEE,  salles.get(7), matieres.get(7), enseignants.get(4), enseignants.get(6), sessions.get(3)),
-                new Surveillance(dateFormat.parse("2023-12-19 09:00"), dateFormat.parse("2023-12-19 11:00"), StatutSurveillance.PLANIFIEE,  salles.get(8), matieres.get(8), enseignants.get(5), enseignants.get(7), sessions.get(4)),
-                new Surveillance(dateFormat.parse("2023-12-19 14:00"), dateFormat.parse("2023-12-19 16:00"), StatutSurveillance.PLANIFIEE,  salles.get(9), matieres.get(9), enseignants.get(8), enseignants.get(9), sessions.get(4))
+                createSurveillance(dateFormat.parse("2023-12-15 09:00"), dateFormat.parse("2023-12-15 11:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(0), matieres.get(0), sessions.get(0)),
+                createSurveillance(dateFormat.parse("2023-12-15 14:00"), dateFormat.parse("2023-12-15 16:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(1), matieres.get(1), sessions.get(0)),
+                createSurveillance(dateFormat.parse("2023-12-16 09:00"), dateFormat.parse("2023-12-16 11:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(2), matieres.get(2), sessions.get(1)),
+                createSurveillance(dateFormat.parse("2023-12-16 14:00"), dateFormat.parse("2023-12-16 16:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(3), matieres.get(3), sessions.get(1)),
+                createSurveillance(dateFormat.parse("2023-12-17 09:00"), dateFormat.parse("2023-12-17 11:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(4), matieres.get(4), sessions.get(2)),
+                createSurveillance(dateFormat.parse("2023-12-17 14:00"), dateFormat.parse("2023-12-17 16:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(5), matieres.get(5), sessions.get(2)),
+                createSurveillance(dateFormat.parse("2023-12-18 09:00"), dateFormat.parse("2023-12-18 11:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(6), matieres.get(6), sessions.get(3)),
+                createSurveillance(dateFormat.parse("2023-12-18 14:00"), dateFormat.parse("2023-12-18 16:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(7), matieres.get(7), sessions.get(3)),
+                createSurveillance(dateFormat.parse("2023-12-19 09:00"), dateFormat.parse("2023-12-19 11:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(8), matieres.get(8), sessions.get(4)),
+                createSurveillance(dateFormat.parse("2023-12-19 14:00"), dateFormat.parse("2023-12-19 16:00"),
+                        StatutSurveillance.PLANIFIEE, salles.get(9), matieres.get(9), sessions.get(4))
         );
 
         for (Surveillance surveillance : surveillances) {
-            if (surveillanceRepository.findByDateDebutAndDateFin(surveillance.getDateDebut(), surveillance.getDateFin()).isEmpty()) {
+            if (!surveillanceRepository.existsByDateDebutAndDateFin(surveillance.getDateDebut(), surveillance.getDateFin())) {
                 surveillanceRepository.save(surveillance);
             }
         }
     }
+
+    private Surveillance createSurveillance(Date dateDebut, Date dateFin, StatutSurveillance statut,
+                                            Salle salle, Matiere matiere, SessionExamen sessionExamen) {
+        Surveillance surveillance = new Surveillance();
+        surveillance.setDateDebut(dateDebut);
+        surveillance.setDateFin(dateFin);
+        surveillance.setStatut(statut);
+        surveillance.setSalle(salle);
+        surveillance.setMatiere(matiere);
+        surveillance.setSessionExamen(sessionExamen);
+        return surveillance;
+    }
+
     private void insertAdministrateurs() {
         List<Administrateur> administrateurs = Arrays.asList(
                 new Administrateur("Admin1", "Doe", "admin1@example.com", "password1", "123456789", "Directeur"),
@@ -101,8 +146,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         for (Administrateur admin : administrateurs) {
-            if (administrateurRepository.findByEmail(admin.getEmail()).isEmpty()) {
-                admin.setMotDePasse(passwordEncoder.encode(admin.getMotDePasse())); // Encoder le mot de passe
+            if (!administrateurRepository.existsByEmail(admin.getEmail())) {
+                admin.setMotDePasse(passwordEncoder.encode(admin.getMotDePasse()));
                 administrateurRepository.save(admin);
             }
         }
@@ -110,39 +155,33 @@ public class DataInitializer implements CommandLineRunner {
 
     private void insertEnseignants() {
         List<Enseignant> enseignants = Arrays.asList(
-                new Enseignant("Jean", "Dupont", "jean.dupont@example.com", "password1", "123456789", "Professeur", "Informatique", true),
-                new Enseignant("Marie", "Curie", "marie.curie@example.com", "password2", "987654321", "Maître de conférences", "Mathématiques", true),
-                new Enseignant("Pierre", "Durand", "pierre.durand@example.com", "password3", "111111111", "Professeur", "Physique", true),
-                new Enseignant("Sophie", "Martin", "sophie.martin@example.com", "password4", "222222222", "Maître de conférences", "Chimie", true),
-                new Enseignant("Luc", "Bernard", "luc.bernard@example.com", "password5", "333333333", "Professeur", "Biologie", true),
-                new Enseignant("Emma", "Petit", "emma.petit@example.com", "password6", "444444444", "Maître de conférences", "Géologie", true),
-                new Enseignant("Louis", "Robert", "louis.robert@example.com", "password7", "555555555", "Professeur", "Informatique", true),
-                new Enseignant("Chloé", "Richard", "chloe.richard@example.com", "password8", "666666666", "Maître de conférences", "Mathématiques", true),
-                new Enseignant("Hugo", "Durand", "hugo.durand@example.com", "password9", "777777777", "Professeur", "Physique", true),
-                new Enseignant("Alice", "Moreau", "alice.moreau@example.com", "password10", "888888888", "Maître de conférences", "Chimie", true)
+                new Enseignant("Jean", "Dupont", "jean.dupont@example.com", "password1", "123456789", "Professeur", "Informatique"),
+                new Enseignant("Marie", "Curie", "marie.curie@example.com", "password2", "987654321", "Maître de conférences", "Mathématiques"),
+                new Enseignant("Pierre", "Durand", "pierre.durand@example.com", "password3", "111111111", "Professeur", "Physique"),
+                new Enseignant("Sophie", "Martin", "sophie.martin@example.com", "password4", "222222222", "Maître de conférences", "Chimie"),
+                new Enseignant("Luc", "Bernard", "luc.bernard@example.com", "password5", "333333333", "Professeur", "Biologie"),
+                new Enseignant("Emma", "Petit", "emma.petit@example.com", "password6", "444444444", "Maître de conférences", "Géologie"),
+                new Enseignant("Louis", "Robert", "louis.robert@example.com", "password7", "555555555", "Professeur", "Informatique"),
+                new Enseignant("Chloé", "Richard", "chloe.richard@example.com", "password8", "666666666", "Maître de conférences", "Mathématiques"),
+                new Enseignant("Hugo", "Durand", "hugo.durand@example.com", "password9", "777777777", "Professeur", "Physique"),
+                new Enseignant("Alice", "Moreau", "alice.moreau@example.com", "password10", "888888888", "Maître de conférences", "Chimie")
         );
 
         for (Enseignant enseignant : enseignants) {
-            if (enseignantRepository.findByEmail(enseignant.getEmail()).isEmpty()) {
-                enseignant.setMotDePasse(passwordEncoder.encode(enseignant.getMotDePasse())); // Encoder le mot de passe
+            if (!enseignantRepository.existsByEmail(enseignant.getEmail())) {
+                enseignant.setMotDePasse(passwordEncoder.encode(enseignant.getMotDePasse()));
                 enseignantRepository.save(enseignant);
             }
         }
     }
-
     private void insertAnneesUniversitaires() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         List<AnneeUniversitaire> annees = Arrays.asList(
                 new AnneeUniversitaire(dateFormat.parse("2023-09-01"), dateFormat.parse("2024-06-30"), true),
                 new AnneeUniversitaire(dateFormat.parse("2024-09-01"), dateFormat.parse("2025-06-30"), false),
-                new AnneeUniversitaire(dateFormat.parse("2025-09-01"), dateFormat.parse("2026-06-30"), true),
+                new AnneeUniversitaire(dateFormat.parse("2025-09-01"), dateFormat.parse("2026-06-30"), false),
                 new AnneeUniversitaire(dateFormat.parse("2026-09-01"), dateFormat.parse("2027-06-30"), false),
-                new AnneeUniversitaire(dateFormat.parse("2027-09-01"), dateFormat.parse("2028-06-30"), true),
-                new AnneeUniversitaire(dateFormat.parse("2028-09-01"), dateFormat.parse("2029-06-30"), false),
-                new AnneeUniversitaire(dateFormat.parse("2029-09-01"), dateFormat.parse("2030-06-30"), true),
-                new AnneeUniversitaire(dateFormat.parse("2030-09-01"), dateFormat.parse("2031-06-30"), false),
-                new AnneeUniversitaire(dateFormat.parse("2031-09-01"), dateFormat.parse("2032-06-30"), true),
-                new AnneeUniversitaire(dateFormat.parse("2032-09-01"), dateFormat.parse("2033-06-30"), false)
+                new AnneeUniversitaire(dateFormat.parse("2027-09-01"), dateFormat.parse("2028-06-30"), false)
         );
 
         for (AnneeUniversitaire annee : annees) {
@@ -197,17 +236,18 @@ public class DataInitializer implements CommandLineRunner {
     private void insertSessionsExamen() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         AnneeUniversitaire annee = anneeUniversitaireRepository.findById(1L).orElseThrow();
+
         List<SessionExamen> sessions = Arrays.asList(
-                new SessionExamen(dateFormat.parse("2023-12-15"), dateFormat.parse("2023-12-22"), TypeSession.PRINCIPALE, true, annee, Semestre.S1),
-                new SessionExamen(dateFormat.parse("2024-01-15"), dateFormat.parse("2024-01-22"), TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
-                new SessionExamen(dateFormat.parse("2024-05-15"), dateFormat.parse("2024-05-22"), TypeSession.PRINCIPALE, true, annee, Semestre.S1),
-                new SessionExamen(dateFormat.parse("2024-06-15"), dateFormat.parse("2024-06-22"), TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
-                new SessionExamen(dateFormat.parse("2024-12-15"), dateFormat.parse("2024-12-22"), TypeSession.PRINCIPALE, true, annee, Semestre.S1),
-                new SessionExamen(dateFormat.parse("2025-01-15"), dateFormat.parse("2025-01-22"), TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
-                new SessionExamen(dateFormat.parse("2025-05-15"), dateFormat.parse("2025-05-22"), TypeSession.PRINCIPALE, true, annee, Semestre.S1),
-                new SessionExamen(dateFormat.parse("2025-06-15"), dateFormat.parse("2025-06-22"), TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
-                new SessionExamen(dateFormat.parse("2025-12-15"), dateFormat.parse("2025-12-22"), TypeSession.PRINCIPALE, true, annee, Semestre.S1),
-                new SessionExamen(dateFormat.parse("2026-01-15"), dateFormat.parse("2026-01-22"), TypeSession.RATTRAPAGE, false, annee, Semestre.S2)
+                new SessionExamen(dateFormat.parse("2023-12-15"), dateFormat.parse("2023-12-22"),
+                        TypeSession.PRINCIPALE, true, annee, Semestre.S1),
+                new SessionExamen(dateFormat.parse("2024-01-15"), dateFormat.parse("2024-01-22"),
+                        TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
+                new SessionExamen(dateFormat.parse("2024-05-15"), dateFormat.parse("2024-05-22"),
+                        TypeSession.PRINCIPALE, true, annee, Semestre.S1),
+                new SessionExamen(dateFormat.parse("2024-06-15"), dateFormat.parse("2024-06-22"),
+                        TypeSession.RATTRAPAGE, false, annee, Semestre.S2),
+                new SessionExamen(dateFormat.parse("2024-12-15"), dateFormat.parse("2024-12-22"),
+                        TypeSession.PRINCIPALE, true, annee, Semestre.S1)
         );
 
         for (SessionExamen session : sessions) {
@@ -216,8 +256,6 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
     }
-
-
 
     private void insertEnseignes() {
         List<Enseignant> enseignants = enseignantRepository.findAll();
@@ -249,7 +287,6 @@ public class DataInitializer implements CommandLineRunner {
         List<Enseignant> enseignants = enseignantRepository.findAll();
         List<Surveillance> surveillances = surveillanceRepository.findAll();
 
-        // Création de 10 notifications avec des enseignants et surveillances variés
         List<Notification> notifications = Arrays.asList(
                 new Notification("Vous avez été assigné à une surveillance.", dateFormat.parse("2023-12-14 10:00"), false, TypeNotification.AFFECTATION, enseignants.get(0), surveillances.get(0)),
                 new Notification("Rappel : Surveillance demain à 10h.", dateFormat.parse("2023-12-14 18:00"), false, TypeNotification.RAPPEL, enseignants.get(1), surveillances.get(1)),

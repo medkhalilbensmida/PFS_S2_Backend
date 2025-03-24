@@ -54,11 +54,25 @@ public class SurveillanceController {
         dto.setDateDebut(surveillance.getDateDebut());
         dto.setDateFin(surveillance.getDateFin());
         dto.setStatut(surveillance.getStatut());
-        dto.setSalleId(surveillance.getSalle().getId());
-        dto.setMatiereId(surveillance.getMatiere().getId());
-        dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal().getId());
-        dto.setEnseignantSecondaireId(surveillance.getEnseignantSecondaire().getId());
-        dto.setSessionExamenId(surveillance.getSessionExamen().getId());
+
+        // Vérification null pour salle
+        dto.setSalleId(surveillance.getSalle() != null ? surveillance.getSalle().getId() : null);
+
+        // Vérification null pour matiere
+        dto.setMatiereId(surveillance.getMatiere() != null ? surveillance.getMatiere().getId() : null);
+
+        // Vérification null pour enseignantPrincipal
+        dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal() != null
+                ? surveillance.getEnseignantPrincipal().getId() : null);
+
+        // Vérification null pour enseignantSecondaire
+        dto.setEnseignantSecondaireId(surveillance.getEnseignantSecondaire() != null
+                ? surveillance.getEnseignantSecondaire().getId() : null);
+
+        // Vérification null pour sessionExamen
+        dto.setSessionExamenId(surveillance.getSessionExamen() != null
+                ? surveillance.getSessionExamen().getId() : null);
+
         return dto;
     }
 
@@ -68,7 +82,7 @@ public class SurveillanceController {
         surveillance.setDateDebut(dto.getDateDebut());
         surveillance.setDateFin(dto.getDateFin());
         surveillance.setStatut(dto.getStatut());
-        // Vous devez récupérer les entités associées par leurs IDs ici
+
         return surveillance;
     }
 }

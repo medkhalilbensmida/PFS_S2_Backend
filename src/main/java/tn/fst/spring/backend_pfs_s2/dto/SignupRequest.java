@@ -9,9 +9,12 @@ public class SignupRequest {
     private String email;
     private String motDePasse;
     private String telephone;
-    private String role; // "ADMIN" ou "ENSEIGNANT"
-    private String fonction; // Pour les administrateurs
-    private String grade; // Pour les enseignants
-    private String departement; // Pour les enseignants
-    private Boolean estDisponible; // Pour les enseignants
+    private String role;
+
+    // Champs spécifiques à l'administrateur
+    private String fonction;
+
+    // Champs spécifiques à l'enseignant
+    private String grade;
+    private String departement;
 }

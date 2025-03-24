@@ -1,5 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,6 +17,10 @@ public class Surveillance {
     private Date dateDebut;
     private Date dateFin;
 
+    @OneToMany(mappedBy = "surveillance")
+    @JsonIgnore
+    private List<DisponibiliteEnseignant> disponibilitesEnseignants;
+
     @Enumerated(EnumType.STRING)
     private StatutSurveillance statut;
 
@@ -28,6 +33,10 @@ public class Surveillance {
     private Matiere matiere;
 
     @ManyToOne
+    @JoinColumn(name = "session_examen_id")
+    private SessionExamen sessionExamen;
+
+    @ManyToOne
     @JoinColumn(name = "enseignant_principal_id")
     private Enseignant enseignantPrincipal;
 
@@ -35,25 +44,19 @@ public class Surveillance {
     @JoinColumn(name = "enseignant_secondaire_id")
     private Enseignant enseignantSecondaire;
 
-    @ManyToOne
-    @JoinColumn(name = "session_examen_id")
-    private SessionExamen sessionExamen;
-
     @OneToMany(mappedBy = "surveillance")
     private List<Notification> notifications;
 
-    // Constructeur par défaut
     public Surveillance() {}
 
-    // Constructeur avec paramètres
-    public Surveillance(Date dateDebut, Date dateFin, StatutSurveillance statut, Salle salle, Matiere matiere, Enseignant enseignantPrincipal, Enseignant enseignantSecondaire, SessionExamen sessionExamen) {
+    // Constructeur pour DataInitializer
+    public Surveillance(Date dateDebut, Date dateFin, StatutSurveillance statut,
+                        Salle salle, Matiere matiere, SessionExamen sessionExamen) {
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
         this.statut = statut;
         this.salle = salle;
         this.matiere = matiere;
-        this.enseignantPrincipal = enseignantPrincipal;
-        this.enseignantSecondaire = enseignantSecondaire;
         this.sessionExamen = sessionExamen;
     }
 }
