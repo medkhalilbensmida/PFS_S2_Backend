@@ -10,7 +10,7 @@ import tn.fst.spring.backend_pfs_s2.repository.AdministrateurRepository;
 import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository;
 
 import java.util.List;
-import java.util.Optional;
+    
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
