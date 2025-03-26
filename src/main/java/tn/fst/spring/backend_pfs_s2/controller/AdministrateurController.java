@@ -1,6 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.AdministrateurDTO;
 import tn.fst.spring.backend_pfs_s2.model.Administrateur;
@@ -11,10 +11,14 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/administrateurs")
+@Secured("ROLE_ADMIN")
 public class AdministrateurController {
 
-    @Autowired
-    private AdministrateurService administrateurService;
+    private final AdministrateurService administrateurService;
+
+    public AdministrateurController(AdministrateurService administrateurService) {
+        this.administrateurService = administrateurService;
+    }
 
     @GetMapping
     public List<AdministrateurDTO> getAllAdministrateurs() {
@@ -25,22 +29,19 @@ public class AdministrateurController {
 
     @GetMapping("/{id}")
     public AdministrateurDTO getAdministrateurById(@PathVariable Long id) {
-        Administrateur administrateur = administrateurService.getAdministrateurById(id);
-        return convertToDTO(administrateur);
+        return convertToDTO(administrateurService.getAdministrateurById(id));
     }
 
     @PostMapping
     public AdministrateurDTO createAdministrateur(@RequestBody AdministrateurDTO administrateurDTO) {
-        Administrateur administrateur = convertToEntity(administrateurDTO);
-        Administrateur createdAdministrateur = administrateurService.createAdministrateur(administrateur);
-        return convertToDTO(createdAdministrateur);
+        Administrateur created = administrateurService.createAdministrateur(convertToEntity(administrateurDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
     public AdministrateurDTO updateAdministrateur(@PathVariable Long id, @RequestBody AdministrateurDTO administrateurDTO) {
-        Administrateur administrateur = convertToEntity(administrateurDTO);
-        Administrateur updatedAdministrateur = administrateurService.updateAdministrateur(id, administrateur);
-        return convertToDTO(updatedAdministrateur);
+        Administrateur updated = administrateurService.updateAdministrateur(id, convertToEntity(administrateurDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -60,13 +61,13 @@ public class AdministrateurController {
     }
 
     private Administrateur convertToEntity(AdministrateurDTO dto) {
-        Administrateur administrateur = new Administrateur();
-        administrateur.setId(dto.getId());
-        administrateur.setNom(dto.getNom());
-        administrateur.setPrenom(dto.getPrenom());
-        administrateur.setEmail(dto.getEmail());
-        administrateur.setTelephone(dto.getTelephone());
-        administrateur.setFonction(dto.getFonction());
-        return administrateur;
+        Administrateur admin = new Administrateur();
+        admin.setId(dto.getId());
+        admin.setNom(dto.getNom());
+        admin.setPrenom(dto.getPrenom());
+        admin.setEmail(dto.getEmail());
+        admin.setTelephone(dto.getTelephone());
+        admin.setFonction(dto.getFonction());
+        return admin;
     }
 }

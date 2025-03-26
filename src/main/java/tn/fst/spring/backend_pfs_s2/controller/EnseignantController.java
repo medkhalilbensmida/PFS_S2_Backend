@@ -1,6 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.EnseignantDTO;
 import tn.fst.spring.backend_pfs_s2.model.Enseignant;
@@ -11,10 +11,14 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/enseignants")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class EnseignantController {
 
-    @Autowired
-    private EnseignantService enseignantService;
+    private final EnseignantService enseignantService;
+
+    public EnseignantController(EnseignantService enseignantService) {
+        this.enseignantService = enseignantService;
+    }
 
     @GetMapping
     public List<EnseignantDTO> getAllEnseignants() {
@@ -24,26 +28,27 @@ public class EnseignantController {
     }
 
     @GetMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public EnseignantDTO getEnseignantById(@PathVariable Long id) {
-        Enseignant enseignant = enseignantService.getEnseignantById(id);
-        return convertToDTO(enseignant);
+        return convertToDTO(enseignantService.getEnseignantById(id));
     }
 
     @PostMapping
+    @Secured("ROLE_ADMIN")
     public EnseignantDTO createEnseignant(@RequestBody EnseignantDTO enseignantDTO) {
-        Enseignant enseignant = convertToEntity(enseignantDTO);
-        Enseignant createdEnseignant = enseignantService.createEnseignant(enseignant);
-        return convertToDTO(createdEnseignant);
+        Enseignant created = enseignantService.createEnseignant(convertToEntity(enseignantDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
+    @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
     public EnseignantDTO updateEnseignant(@PathVariable Long id, @RequestBody EnseignantDTO enseignantDTO) {
-        Enseignant enseignant = convertToEntity(enseignantDTO);
-        Enseignant updatedEnseignant = enseignantService.updateEnseignant(id, enseignant);
-        return convertToDTO(updatedEnseignant);
+        Enseignant updated = enseignantService.updateEnseignant(id, convertToEntity(enseignantDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteEnseignant(@PathVariable Long id) {
         enseignantService.deleteEnseignant(id);
     }

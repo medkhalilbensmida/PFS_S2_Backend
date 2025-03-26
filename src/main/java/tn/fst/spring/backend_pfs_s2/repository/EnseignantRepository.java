@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface EnseignantRepository extends JpaRepository<Enseignant, Long> {
     List<Enseignant> findByEmail(String email);
-    boolean existsByEmail(String email); // Add this method
+    boolean existsByEmail(String email);
 }

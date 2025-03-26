@@ -6,6 +6,8 @@ import lombok.Data;
 public class DisponibiliteEnseignantDTO {
     private Long id;
     private Long enseignantId;
+    private String enseignantNom;
+    private String enseignantPrenom;
     private Long surveillanceId;
     private Boolean estDisponible;
 }

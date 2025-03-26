@@ -1,49 +1,66 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.backend_pfs_s2.dto.MatiereDTO;
+import tn.fst.spring.backend_pfs_s2.dto.*;
 import tn.fst.spring.backend_pfs_s2.model.Matiere;
 import tn.fst.spring.backend_pfs_s2.service.MatiereService;
+import tn.fst.spring.backend_pfs_s2.service.CustomUserDetails;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/matieres")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class MatiereController {
 
-    @Autowired
-    private MatiereService matiereService;
+    private final MatiereService matiereService;
 
-    @GetMapping
+    public MatiereController(MatiereService matiereService) {
+        this.matiereService = matiereService;
+    }
+
+    @GetMapping("/All")
+    @Secured("ROLE_ADMIN")
     public List<MatiereDTO> getAllMatieres() {
         return matiereService.getAllMatieres().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/my")
+    @Secured("ROLE_ENSEIGNANT")
+    public List<EnseignantMatiereDTO> getMyMatieres() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long enseignantId = userDetails.getUserId();
+
+        return matiereService.getMatieresDetailsByEnseignantId(enseignantId);
+    }
     @GetMapping("/{id}")
     public MatiereDTO getMatiereById(@PathVariable Long id) {
-        Matiere matiere = matiereService.getMatiereById(id);
-        return convertToDTO(matiere);
+        return convertToDTO(matiereService.getMatiereById(id));
     }
 
     @PostMapping
+    @Secured("ROLE_ADMIN")
     public MatiereDTO createMatiere(@RequestBody MatiereDTO matiereDTO) {
-        Matiere matiere = convertToEntity(matiereDTO);
-        Matiere createdMatiere = matiereService.createMatiere(matiere);
-        return convertToDTO(createdMatiere);
+        Matiere created = matiereService.createMatiere(convertToEntity(matiereDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public MatiereDTO updateMatiere(@PathVariable Long id, @RequestBody MatiereDTO matiereDTO) {
-        Matiere matiere = convertToEntity(matiereDTO);
-        Matiere updatedMatiere = matiereService.updateMatiere(id, matiere);
-        return convertToDTO(updatedMatiere);
+        Matiere updated = matiereService.updateMatiere(id, convertToEntity(matiereDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteMatiere(@PathVariable Long id) {
         matiereService.deleteMatiere(id);
     }
