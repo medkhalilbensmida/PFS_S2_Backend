@@ -64,6 +64,7 @@ public class DataInitializer implements CommandLineRunner {
         initDisponibilitesForAllSurveillances();
     }
 
+
     private void initDisponibilitesForAllSurveillances() {
         List<Surveillance> surveillances = surveillanceRepository.findAll();
         List<Enseignant> enseignants = enseignantRepository.findAll();
@@ -74,7 +75,7 @@ public class DataInitializer implements CommandLineRunner {
                     DisponibiliteEnseignant disponibilite = new DisponibiliteEnseignant();
                     disponibilite.setEnseignant(enseignant);
                     disponibilite.setSurveillance(surveillance);
-                    disponibilite.setEstDisponible(false); // Initialement non disponible
+                    disponibilite.setEstDisponible(true); // Initialement non disponible
                     disponibiliteRepository.save(disponibilite);
                 }
             }

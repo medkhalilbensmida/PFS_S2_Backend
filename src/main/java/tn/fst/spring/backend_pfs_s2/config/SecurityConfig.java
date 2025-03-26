@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // Désactiver CSRF
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
+                                //"/api/*",
+                                //"/api/surveillances/export/csv",
                                 "/api/auth/**", // Autoriser l'accès à l'authentification
                                 "/swagger-ui/**", // Autoriser l'accès à Swagger UI
                                 "/v3/api-docs/**", // Autoriser l'accès à la documentation OpenAPI
