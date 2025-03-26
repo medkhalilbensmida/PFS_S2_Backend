@@ -2,6 +2,7 @@ package tn.fst.spring.backend_pfs_s2.service.mail;
 
 import java.util.Map;
 
+import java.util.HashMap;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -9,11 +10,11 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import tn.fst.spring.backend_pfs_s2.service.dto.MailRequest;
-
 /**
  * Service for sending emails using a template engine.
  * This service utilizes JavaMailSender for sending emails and SpringTemplateEngine
@@ -56,14 +57,34 @@ public class MailService {
             }
         
             String htmlContent = templateEngine.process(template, context);
-            
+            System.out.println(htmlContent);
             helper.setText(htmlContent, true);
         } else {
             helper.setText(request.getMessage(),false);
         }
+        mailSender.send(message);
 
     }
 
+    @PostConstruct
+    public void sendTestEmail() {
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("name", "Test User");
+            variables.put("message", "This is an automated test email.");
 
+            MailRequest testRequest = new MailRequest();
+            testRequest.setToEmail("test@localhost");
+            testRequest.setSubject("Test Email");
+            testRequest.setTemplate("Test");
+            testRequest.setIsHtml(true);
+            testRequest.setContext(variables);
+
+            sendEmail(testRequest);
+            System.out.println("Test email sent successfully!");
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
