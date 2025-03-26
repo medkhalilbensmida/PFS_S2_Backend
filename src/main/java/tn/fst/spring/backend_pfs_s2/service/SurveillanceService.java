@@ -3,9 +3,7 @@ package tn.fst.spring.backend_pfs_s2.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.properties.UnitValue;
+
 
 import tn.fst.spring.backend_pfs_s2.model.*;
 import tn.fst.spring.backend_pfs_s2.repository.*;
@@ -13,18 +11,13 @@ import tn.fst.spring.backend_pfs_s2.repository.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import java.util.Optional;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import org.apache.poi.ss.usermodel.*;
+
+import tn.fst.spring.backend_pfs_s2.service.export.CsvExportService;
+import tn.fst.spring.backend_pfs_s2.service.export.ExcelExportService;
 
 
 @Service
@@ -38,9 +31,13 @@ public class SurveillanceService {
 
     @Autowired
     private DisponibiliteEnseignantRepository disponibiliteRepository;
+    @Autowired
+    private CsvExportService csvExportService;
 
     @Autowired
-    private PdfGenerationService pdfGenerationService;
+    private ExcelExportService excelExportService;
+
+
 
     public List<Surveillance> getAllSurveillances() {
         return surveillanceRepository.findAll();
@@ -85,7 +82,46 @@ public class SurveillanceService {
         surveillanceRepository.deleteById(id);
     }
 
-    public List<DisponibiliteEnseignant> getDisponibilitesForSurveillance(Long surveillanceId) {
+    public List<Surveillance> getAvailableSurveillances() {
+        return surveillanceRepository.findAll().stream()
+                .filter(surveillance ->
+                        surveillance.getStatut() == StatutSurveillance.PLANIFIEE &&
+                                isEnseignantAvailable(surveillance.getEnseignantPrincipal(), surveillance) &&
+                                isEnseignantAvailable(surveillance.getEnseignantSecondaire(), surveillance)
+                )
+                .collect(Collectors.toList());
+    }
+
+    public void exportToCsv(OutputStream outputStream) throws IOException {
+        List<Surveillance> surveillances = getAvailableSurveillances();
+        csvExportService.export(surveillances, outputStream);
+    }
+
+    public void exportToExcel(OutputStream outputStream) throws IOException {
+        List<Surveillance> surveillances = getAvailableSurveillances();
+        excelExportService.export(surveillances, outputStream);
+    }
+
+    private boolean isEnseignantAvailable(Enseignant enseignant, Surveillance surveillance) {
+        if (enseignant == null) return false;
+
+        Optional<DisponibiliteEnseignant> disponibilite = disponibiliteRepository
+                .findByEnseignantAndSurveillance(enseignant, surveillance);
+
+        return disponibilite
+                .map(DisponibiliteEnseignant::getEstDisponible)
+                .orElse(false);
+    }
+
+
+    public List<Surveillance> getSurveillancesByEnseignant(Long enseignantId) {
+        return surveillanceRepository.findAll().stream()
+                .filter(s -> (s.getEnseignantPrincipal() != null && s.getEnseignantPrincipal().getId().equals(enseignantId)) ||
+                        (s.getEnseignantSecondaire() != null && s.getEnseignantSecondaire().getId().equals(enseignantId)))
+                .collect(Collectors.toList());
+    }
+
+   /* public List<DisponibiliteEnseignant> getDisponibilitesForSurveillance(Long surveillanceId) {
         return disponibiliteRepository.findBySurveillanceId(surveillanceId);
     }
 
@@ -100,8 +136,8 @@ public class SurveillanceService {
             return disponibiliteRepository.save(disponibilite);
         }
         return null;
-    }
-    private String formatDate(Date date) {
+    }*/
+    /*private String formatDate(Date date) {
         if (date == null) return "";
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         return sdf.format(date);
@@ -110,8 +146,9 @@ public class SurveillanceService {
     private String formatEnseignant(Enseignant enseignant) {
         if (enseignant == null) return "";
         return String.format("%s %s", enseignant.getNom(), enseignant.getPrenom());
-    }
+    }*/
 
+/*
 public void generateCsv(Writer writer) throws IOException {
     CSVFormat csvFormat = CSVFormat.Builder.create()
             .setDelimiter(',')
@@ -147,21 +184,11 @@ public void generateCsv(Writer writer) throws IOException {
         csvPrinter.flush();
     }
 }
-
-// Add this helper method to check teacher availability
-private boolean isEnseignantAvailable(Enseignant enseignant, Surveillance surveillance) {
-    if (enseignant == null) return false;
-
-    Optional<DisponibiliteEnseignant> disponibilite = disponibiliteRepository
-        .findByEnseignantAndSurveillance(enseignant, surveillance);
-
-    return disponibilite
-        .map(DisponibiliteEnseignant::getEstDisponible)
-        .orElse(false);
-}
+*/
 
 
-public void generateExcel(OutputStream outputStream) throws IOException {
+
+/*public void generateExcel(OutputStream outputStream) throws IOException {
     try (Workbook workbook = new XSSFWorkbook()) {
         Sheet sheet = workbook.createSheet("Surveillances");
 
@@ -236,9 +263,7 @@ public void generateExcel(OutputStream outputStream) throws IOException {
 
             workbook.write(outputStream);
         }
-    }
-
-    /*public void generateConvocationPdf(Long enseignantId, OutputStream outputStream) throws IOException {
-        pdfGenerationService.generateConvocationPdf(enseignantId, outputStream);
     }*/
+
+
 }

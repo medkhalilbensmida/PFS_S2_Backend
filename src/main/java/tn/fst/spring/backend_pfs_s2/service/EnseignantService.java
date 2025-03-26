@@ -11,13 +11,13 @@ import java.util.List;
 public class EnseignantService {
 
     @Autowired
-    private EnseignantRepository enseignantRepository;
+    private static EnseignantRepository enseignantRepository;
 
     public List<Enseignant> getAllEnseignants() {
         return enseignantRepository.findAll();
     }
 
-    public Enseignant getEnseignantById(Long id) {
+    public static Enseignant getEnseignantById(Long id) {
         return enseignantRepository.findById(id).orElse(null);
     }
 
