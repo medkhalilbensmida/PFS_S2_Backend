@@ -1,5 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,6 +19,8 @@ import tn.fst.spring.backend_pfs_s2.service.CustomUserDetailsService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -74,7 +77,9 @@ public class AuthController {
         try {
             // Vérification dans les deux tables
             if (emailExistsInAnyRepository(enseignantRequest.getEmail())) {
-                return ResponseEntity.badRequest().body("Email déjà utilisé");
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ErrorResponse("EMAIL_EXISTS", "Cet email est déjà utilisé"));
             }
 
             Enseignant enseignant = new Enseignant();
@@ -87,7 +92,9 @@ public class AuthController {
             enseignant.setDepartement(enseignantRequest.getDepartement());
 
             enseignantRepository.save(enseignant);
-            return ResponseEntity.ok("Enseignant enregistré avec succès");
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("message", "Enseignant enregistré avec succès"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erreur lors de l'inscription");
         }
@@ -99,7 +106,9 @@ public class AuthController {
         try {
             // Vérification dans les deux tables
             if (emailExistsInAnyRepository(adminRequest.getEmail())) {
-                return ResponseEntity.badRequest().body("Email déjà utilisé");
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ErrorResponse("EMAIL_EXISTS", "Cet email est déjà utilisé"));
             }
 
             Administrateur admin = new Administrateur();
@@ -111,7 +120,9 @@ public class AuthController {
             admin.setFonction(adminRequest.getFonction());
 
             administrateurRepository.save(admin);
-            return ResponseEntity.ok("Administrateur enregistré avec succès");
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("message", "Administrateur enregistré avec succès"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erreur lors de l'inscription");
         }
