@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.Map;
-
+import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
@@ -26,7 +26,13 @@ public class MailRequest {
 
     private String template;
 
-    // private String attachment
+    private List<Attachment> attachments; // New field
+
+    @Data
+    public static class Attachment {
+        private String fileName;
+        private byte[] fileData; // You can also use InputStreamSource
+    }
 
     private Map<String, Object> context;
 }

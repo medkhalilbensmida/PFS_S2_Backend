@@ -60,8 +60,16 @@ public class MailService {
             String htmlContent = templateEngine.process(template, context);
             System.out.println(htmlContent);
             helper.setText(htmlContent, true);
+            
         } else {
             helper.setText(request.getMessage(),false);
+        }
+
+        // Handle attachments
+        if (request.getAttachments() != null) {
+            for (MailRequest.Attachment attachment : request.getAttachments()) {
+                helper.addAttachment(attachment.getFileName(), new ByteArrayResource(attachment.getFileData()));
+            }
         }
         mailSender.send(message);
 
