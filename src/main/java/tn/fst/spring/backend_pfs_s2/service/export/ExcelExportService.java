@@ -8,6 +8,7 @@ import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -98,7 +99,7 @@ public class ExcelExportService implements SurveillanceExportService {
     }
 
 
-    private CellStyle createDateStyle(XSSFWorkbook workbook, boolean alternateRow) {
+    private CellStyle createDateStyle(XSSFWorkbook workbook) {
         CellStyle dateStyle = workbook.createCellStyle();
 
         // Copy all the basic cell properties
@@ -112,11 +113,7 @@ public class ExcelExportService implements SurveillanceExportService {
         // Set date format
         dateStyle.setDataFormat(workbook.createDataFormat().getFormat("dd/mm/yyyy hh:mm"));
 
-        // Set background color if it's an alternate row
-        if (alternateRow) {
-            dateStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            dateStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        }
+
 
         return dateStyle;
     }
@@ -133,40 +130,71 @@ public class ExcelExportService implements SurveillanceExportService {
     }
 
 
-    private void fillDataRows(XSSFSheet sheet, List<Surveillance> surveillances,
-                              CellStyle dataCellStyle) {
-        int rowNum = 1;
-        for (Surveillance surveillance : surveillances) {
-            Row row = sheet.createRow(rowNum++);
-            row.setHeight((short) 500);
 
-            boolean isAlternateRow = rowNum % 2 == 1;
+   private void fillDataRows(XSSFSheet sheet, List<Surveillance> surveillances, CellStyle dataCellStyle) {
+       // Sort surveillances by date
+       surveillances.sort((s1, s2) -> s1.getDateDebut().compareTo(s2.getDateDebut()));
 
-            // Create row-specific styles
-            CellStyle rowStyle = sheet.getWorkbook().createCellStyle();
-            rowStyle.cloneStyleFrom(dataCellStyle);
-            CellStyle rowDateStyle = createDateStyle(sheet.getWorkbook(), isAlternateRow);
+       int rowNum = 1;
+       Date previousDate = null;
 
-            if (isAlternateRow) {
-                rowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-                rowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            }
+       // Create date separator style
+       CellStyle separatorStyle = sheet.getWorkbook().createCellStyle();
+       separatorStyle.setBorderBottom(BorderStyle.NONE);
+       separatorStyle.setBorderTop(BorderStyle.NONE);
 
-            // Apply styles to cells
-            createCell(row, 0, surveillance.getId(), rowStyle);
-            createCell(row, 1, surveillance.getDateDebut(), rowDateStyle);
-            createCell(row, 2, surveillance.getDateFin(), rowDateStyle);
-            createCell(row, 3, surveillance.getSessionExamen() != null ?
-                    surveillance.getSessionExamen().getType().toString() : "", rowStyle);
-            createCell(row, 4, surveillance.getMatiere() != null ?
-                    surveillance.getMatiere().getNom() : "", rowStyle);
-            createCell(row, 5, ExportUtils.formatEnseignant(
-                    surveillance.getEnseignantPrincipal()), rowStyle);
-            createCell(row, 6, ExportUtils.formatEnseignant(
-                    surveillance.getEnseignantSecondaire()), rowStyle);
-            createCell(row, 7, surveillance.getSalle() != null ?
-                    surveillance.getSalle().getNumero() : "", rowStyle);
+       separatorStyle.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+       separatorStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+       separatorStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+       for (Surveillance surveillance : surveillances) {
+           // Check if date changed and add separator
+           if (previousDate != null && !isSameDay(previousDate, surveillance.getDateDebut())) {
+               Row separatorRow = sheet.createRow(rowNum++);
+               separatorRow.setHeight((short) 100);
+               for (int i = 0; i < HEADERS.length; i++) {
+                   Cell cell = separatorRow.createCell(i);
+                   cell.setCellStyle(separatorStyle);
+               }
+           }
+
+           Row row = sheet.createRow(rowNum++);
+           row.setHeight((short) 500);
+
+           // Create row-specific styles
+           CellStyle rowStyle = sheet.getWorkbook().createCellStyle();
+           rowStyle.cloneStyleFrom(dataCellStyle);
+           CellStyle rowDateStyle = createDateStyle(sheet.getWorkbook());
+
+           // Apply styles to cells
+           createCell(row, 0, surveillance.getId(), rowStyle);
+           createCell(row, 1, surveillance.getDateDebut(), rowDateStyle);
+           createCell(row, 2, surveillance.getDateFin(), rowDateStyle);
+           createCell(row, 3, surveillance.getSessionExamen() != null ?
+                   surveillance.getSessionExamen().getType().toString() : "", rowStyle);
+           createCell(row, 4, surveillance.getMatiere() != null ?
+                   surveillance.getMatiere().getNom() : "", rowStyle);
+           createCell(row, 5, ExportUtils.formatEnseignant(
+                   surveillance.getEnseignantPrincipal()), rowStyle);
+           createCell(row, 6, ExportUtils.formatEnseignant(
+                   surveillance.getEnseignantSecondaire()), rowStyle);
+           createCell(row, 7, surveillance.getSalle() != null ?
+                   surveillance.getSalle().getNumero() : "", rowStyle);
+
+           previousDate = surveillance.getDateDebut();
+       }
+   }
+    // Add this helper method to check if two dates are on the same day
+    private boolean isSameDay(Date date1, Date date2) {
+        if (date1 == null || date2 == null) {
+            return false;
         }
+        java.util.Calendar cal1 = java.util.Calendar.getInstance();
+        java.util.Calendar cal2 = java.util.Calendar.getInstance();
+        cal1.setTime(date1);
+        cal2.setTime(date2);
+        return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+                cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR);
     }
     private void createCell(Row row, int column, Object value, CellStyle style) {
         Cell cell = row.createCell(column);

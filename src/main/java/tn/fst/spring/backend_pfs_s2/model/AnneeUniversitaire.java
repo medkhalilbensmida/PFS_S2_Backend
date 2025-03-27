@@ -2,6 +2,7 @@ package tn.fst.spring.backend_pfs_s2.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.List;
@@ -28,5 +29,14 @@ public class AnneeUniversitaire {
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
         this.estActive = estActive;
+    }
+
+    @Override
+    public String toString() {
+        return "" +
+                (dateDebut.getYear()+1900) +
+                "-"+
+                (dateFin.getYear()+1900) +
+                "";
     }
 }

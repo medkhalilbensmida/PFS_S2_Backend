@@ -99,21 +99,7 @@ public class SurveillanceController {
     }
 
 
-    /*@GetMapping(value = "/export/csv", produces = "text/csv;charset=UTF-8")
-    public void exportToCsv(HttpServletResponse response) throws IOException {
-        response.setContentType("text/csv;charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment; filename=\"surveillances.csv\"");
-        response.setCharacterEncoding("UTF-8");
 
-        // Write UTF-8 BOM for Excel compatibility
-        byte[] bom = new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF };
-        response.getOutputStream().write(bom);
-
-        Writer writer = new BufferedWriter(new OutputStreamWriter(
-                response.getOutputStream(), StandardCharsets.UTF_8
-        ));
-        surveillanceService.exportToCsv(writer);
-    }*/
 
     @GetMapping(value = "/export/excel", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     public void exportToExcel(HttpServletResponse response) throws IOException {

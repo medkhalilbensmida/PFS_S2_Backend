@@ -11,8 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface DisponibiliteEnseignantRepository extends JpaRepository<DisponibiliteEnseignant, Long> {
+    List<DisponibiliteEnseignant> findByEnseignantAndSurveillance(Enseignant enseignant, Surveillance surveillance);
     List<DisponibiliteEnseignant> findByEnseignantId(Long enseignantId);
     List<DisponibiliteEnseignant> findBySurveillanceId(Long surveillanceId);
-    Optional<DisponibiliteEnseignant> findByEnseignantAndSurveillance(Enseignant enseignant, Surveillance surveillance);
     boolean existsByEnseignantAndSurveillance(Enseignant enseignant, Surveillance surveillance);
 }
