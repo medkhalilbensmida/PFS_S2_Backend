@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Test Email</title>
+</head>
+<body>
+    <h2>Hello <span th:text="${name}">User</span>,</h2>
+    <p>This is a test email to check Thymeleaf templates with Spring Boot.</p>
+    <p><strong>Message:</strong> <span th:text="${message}"></span></p>
+    <br>
+    <p>Best regards,<br>Your Spring Boot App</p>
+</body>
+</html>
