@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface MatiereRepository extends JpaRepository<Matiere, Long> {
     List<Matiere> findByCode(String code);
-
+    List<Matiere> findByEnseignes_Enseignant_Id(Long enseignantId);
 }

@@ -1,6 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.AnneeUniversitaireDTO;
 import tn.fst.spring.backend_pfs_s2.model.AnneeUniversitaire;
@@ -11,41 +11,45 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/annees")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class AnneeUniversitaireController {
 
-    @Autowired
-    private AnneeUniversitaireService anneeUniversitaireService;
+    private final AnneeUniversitaireService anneeService;
+
+    public AnneeUniversitaireController(AnneeUniversitaireService anneeService) {
+        this.anneeService = anneeService;
+    }
 
     @GetMapping
     public List<AnneeUniversitaireDTO> getAllAnnees() {
-        return anneeUniversitaireService.getAllAnnees().stream()
+        return anneeService.getAllAnnees().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public AnneeUniversitaireDTO getAnneeById(@PathVariable Long id) {
-        AnneeUniversitaire annee = anneeUniversitaireService.getAnneeById(id);
-        return convertToDTO(annee);
+        return convertToDTO(anneeService.getAnneeById(id));
     }
 
     @PostMapping
+    @Secured("ROLE_ADMIN")
     public AnneeUniversitaireDTO createAnnee(@RequestBody AnneeUniversitaireDTO anneeDTO) {
-        AnneeUniversitaire annee = convertToEntity(anneeDTO);
-        AnneeUniversitaire createdAnnee = anneeUniversitaireService.createAnnee(annee);
-        return convertToDTO(createdAnnee);
+        AnneeUniversitaire created = anneeService.createAnnee(convertToEntity(anneeDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public AnneeUniversitaireDTO updateAnnee(@PathVariable Long id, @RequestBody AnneeUniversitaireDTO anneeDTO) {
-        AnneeUniversitaire annee = convertToEntity(anneeDTO);
-        AnneeUniversitaire updatedAnnee = anneeUniversitaireService.updateAnnee(id, annee);
-        return convertToDTO(updatedAnnee);
+        AnneeUniversitaire updated = anneeService.updateAnnee(id, convertToEntity(anneeDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteAnnee(@PathVariable Long id) {
-        anneeUniversitaireService.deleteAnnee(id);
+        anneeService.deleteAnnee(id);
     }
 
     private AnneeUniversitaireDTO convertToDTO(AnneeUniversitaire annee) {

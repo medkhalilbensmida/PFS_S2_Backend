@@ -1,6 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.SalleDTO;
 import tn.fst.spring.backend_pfs_s2.model.Salle;
@@ -11,10 +11,14 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/salles")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class SalleController {
 
-    @Autowired
-    private SalleService salleService;
+    private final SalleService salleService;
+
+    public SalleController(SalleService salleService) {
+        this.salleService = salleService;
+    }
 
     @GetMapping
     public List<SalleDTO> getAllSalles() {
@@ -24,26 +28,27 @@ public class SalleController {
     }
 
     @GetMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public SalleDTO getSalleById(@PathVariable Long id) {
-        Salle salle = salleService.getSalleById(id);
-        return convertToDTO(salle);
+        return convertToDTO(salleService.getSalleById(id));
     }
 
     @PostMapping
+    @Secured("ROLE_ADMIN")
     public SalleDTO createSalle(@RequestBody SalleDTO salleDTO) {
-        Salle salle = convertToEntity(salleDTO);
-        Salle createdSalle = salleService.createSalle(salle);
-        return convertToDTO(createdSalle);
+        Salle created = salleService.createSalle(convertToEntity(salleDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public SalleDTO updateSalle(@PathVariable Long id, @RequestBody SalleDTO salleDTO) {
-        Salle salle = convertToEntity(salleDTO);
-        Salle updatedSalle = salleService.updateSalle(id, salle);
-        return convertToDTO(updatedSalle);
+        Salle updated = salleService.updateSalle(id, convertToEntity(salleDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteSalle(@PathVariable Long id) {
         salleService.deleteSalle(id);
     }

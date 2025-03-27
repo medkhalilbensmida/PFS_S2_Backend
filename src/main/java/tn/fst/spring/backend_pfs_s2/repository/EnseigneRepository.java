@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface EnseigneRepository extends JpaRepository<Enseigne, Long> {
+    List<Enseigne> findByEnseignantId(Long enseignantId);
     List<Enseigne> findByEnseignantAndMatiere(Enseignant enseignant, Matiere matiere);
-
 }

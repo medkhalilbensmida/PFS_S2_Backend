@@ -1,6 +1,8 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDTO;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping("/api/surveillances")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class SurveillanceController {
 
 
@@ -27,6 +30,11 @@ public class SurveillanceController {
     private SurveillanceService surveillanceService;
     @Autowired
     private ConvocationService convocationService;
+
+
+    public SurveillanceController(SurveillanceService surveillanceService) {
+        this.surveillanceService = surveillanceService;
+    }
 
     @GetMapping
     public List<SurveillanceDTO> getAllSurveillances() {
@@ -37,25 +45,25 @@ public class SurveillanceController {
 
     @GetMapping("/{id}")
     public SurveillanceDTO getSurveillanceById(@PathVariable Long id) {
-        Surveillance surveillance = surveillanceService.getSurveillanceById(id);
-        return convertToDTO(surveillance);
+        return convertToDTO(surveillanceService.getSurveillanceById(id));
     }
 
     @PostMapping
+    @Secured("ROLE_ADMIN")
     public SurveillanceDTO createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
-        Surveillance surveillance = convertToEntity(surveillanceDTO);
-        Surveillance createdSurveillance = surveillanceService.createSurveillance(surveillance);
-        return convertToDTO(createdSurveillance);
+        Surveillance created = surveillanceService.createSurveillance(convertToEntity(surveillanceDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public SurveillanceDTO updateSurveillance(@PathVariable Long id, @RequestBody SurveillanceDTO surveillanceDTO) {
-        Surveillance surveillance = convertToEntity(surveillanceDTO);
-        Surveillance updatedSurveillance = surveillanceService.updateSurveillance(id, surveillance);
-        return convertToDTO(updatedSurveillance);
+        Surveillance updated = surveillanceService.updateSurveillance(id, convertToEntity(surveillanceDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteSurveillance(@PathVariable Long id) {
         surveillanceService.deleteSurveillance(id);
     }
@@ -66,25 +74,21 @@ public class SurveillanceController {
         dto.setDateDebut(surveillance.getDateDebut());
         dto.setDateFin(surveillance.getDateFin());
         dto.setStatut(surveillance.getStatut());
-
-        // Vérification null pour salle
-        dto.setSalleId(surveillance.getSalle() != null ? surveillance.getSalle().getId() : null);
-
-        // Vérification null pour matiere
-        dto.setMatiereId(surveillance.getMatiere() != null ? surveillance.getMatiere().getId() : null);
-
-        // Vérification null pour enseignantPrincipal
-        dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal() != null
-                ? surveillance.getEnseignantPrincipal().getId() : null);
-
-        // Vérification null pour enseignantSecondaire
-        dto.setEnseignantSecondaireId(surveillance.getEnseignantSecondaire() != null
-                ? surveillance.getEnseignantSecondaire().getId() : null);
-
-        // Vérification null pour sessionExamen
-        dto.setSessionExamenId(surveillance.getSessionExamen() != null
-                ? surveillance.getSessionExamen().getId() : null);
-
+        if (surveillance.getSalle() != null) {
+            dto.setSalleId(surveillance.getSalle().getId());
+        }
+        if (surveillance.getMatiere() != null) {
+            dto.setMatiereId(surveillance.getMatiere().getId());
+        }
+        if (surveillance.getEnseignantPrincipal() != null) {
+            dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal().getId());
+        }
+        if (surveillance.getEnseignantSecondaire() != null) {
+            dto.setEnseignantSecondaireId(surveillance.getEnseignantSecondaire().getId());
+        }
+        if (surveillance.getSessionExamen() != null) {
+            dto.setSessionExamenId(surveillance.getSessionExamen().getId());
+        }
         return dto;
     }
 

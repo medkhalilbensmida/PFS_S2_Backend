@@ -1,6 +1,6 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDTO;
 import tn.fst.spring.backend_pfs_s2.model.Semestre;
@@ -12,64 +12,70 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sessions")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class SessionExamenController {
 
-    @Autowired
-    private SessionExamenService sessionExamenService;
+    private final SessionExamenService sessionService;
+
+    public SessionExamenController(SessionExamenService sessionService) {
+        this.sessionService = sessionService;
+    }
 
     @GetMapping
     public List<SessionExamenDTO> getAllSessions() {
-        return sessionExamenService.getAllSessions().stream()
+        return sessionService.getAllSessions().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public SessionExamenDTO getSessionById(@PathVariable Long id) {
-        SessionExamen sessionExamen = sessionExamenService.getSessionById(id);
-        return convertToDTO(sessionExamen);
+        return convertToDTO(sessionService.getSessionById(id));
     }
 
     @PostMapping
-    public SessionExamenDTO createSession(@RequestBody SessionExamenDTO sessionExamenDTO) {
-        SessionExamen sessionExamen = convertToEntity(sessionExamenDTO);
-        SessionExamen createdSession = sessionExamenService.createSession(sessionExamen);
-        return convertToDTO(createdSession);
+    @Secured("ROLE_ADMIN")
+    public SessionExamenDTO createSession(@RequestBody SessionExamenDTO sessionDTO) {
+        SessionExamen created = sessionService.createSession(convertToEntity(sessionDTO));
+        return convertToDTO(created);
     }
 
     @PutMapping("/{id}")
-    public SessionExamenDTO updateSession(@PathVariable Long id, @RequestBody SessionExamenDTO sessionExamenDTO) {
-        SessionExamen sessionExamen = convertToEntity(sessionExamenDTO);
-        SessionExamen updatedSession = sessionExamenService.updateSession(id, sessionExamen);
-        return convertToDTO(updatedSession);
+    @Secured("ROLE_ADMIN")
+    public SessionExamenDTO updateSession(@PathVariable Long id, @RequestBody SessionExamenDTO sessionDTO) {
+        SessionExamen updated = sessionService.updateSession(id, convertToEntity(sessionDTO));
+        return convertToDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteSession(@PathVariable Long id) {
-        sessionExamenService.deleteSession(id);
+        sessionService.deleteSession(id);
     }
 
-    private SessionExamenDTO convertToDTO(SessionExamen sessionExamen) {
+    private SessionExamenDTO convertToDTO(SessionExamen session) {
         SessionExamenDTO dto = new SessionExamenDTO();
-        dto.setId(sessionExamen.getId());
-        dto.setDateDebut(sessionExamen.getDateDebut());
-        dto.setDateFin(sessionExamen.getDateFin());
-        dto.setType(sessionExamen.getType());
-        dto.setEstActive(sessionExamen.getEstActive());
-        dto.setAnneeUniversitaireId(sessionExamen.getAnnee().getId());
-        dto.setNumSemestre(String.valueOf(sessionExamen.getNumSemestre()));
+        dto.setId(session.getId());
+        dto.setDateDebut(session.getDateDebut());
+        dto.setDateFin(session.getDateFin());
+        dto.setType(session.getType());
+        dto.setEstActive(session.getEstActive());
+        if (session.getAnnee() != null) {
+            dto.setAnneeUniversitaireId(session.getAnnee().getId());
+        }
+        dto.setNumSemestre(session.getNumSemestre().toString());
         return dto;
     }
 
     private SessionExamen convertToEntity(SessionExamenDTO dto) {
-        SessionExamen sessionExamen = new SessionExamen();
-        sessionExamen.setId(dto.getId());
-        sessionExamen.setDateDebut(dto.getDateDebut());
-        sessionExamen.setDateFin(dto.getDateFin());
-        sessionExamen.setType(dto.getType());
-        sessionExamen.setEstActive(dto.getEstActive());
-        // Vous devez récupérer l'AnneeUniversitaire par son ID ici
-        sessionExamen.setNumSemestre(Semestre.valueOf(dto.getNumSemestre()));
-        return sessionExamen;
+        SessionExamen session = new SessionExamen();
+        session.setId(dto.getId());
+        session.setDateDebut(dto.getDateDebut());
+        session.setDateFin(dto.getDateFin());
+        session.setType(dto.getType());
+        session.setEstActive(dto.getEstActive());
+        session.setNumSemestre(Semestre.valueOf(dto.getNumSemestre()));
+        return session;
     }
 }

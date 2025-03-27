@@ -1,10 +1,14 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import tn.fst.spring.backend_pfs_s2.dto.EnseigneDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.dto.EnseigneDTO;
 import tn.fst.spring.backend_pfs_s2.model.Enseigne;
 import tn.fst.spring.backend_pfs_s2.model.Semestre;
+import tn.fst.spring.backend_pfs_s2.model.TypeMatiere;
+import tn.fst.spring.backend_pfs_s2.service.CustomUserDetails;
 import tn.fst.spring.backend_pfs_s2.service.EnseigneService;
 
 import java.util.List;
@@ -12,39 +16,54 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/enseigne")
+@Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
 public class EnseigneController {
 
-    @Autowired
-    private EnseigneService enseigneService;
+    private final EnseigneService enseigneService;
+
+    public EnseigneController(EnseigneService enseigneService) {
+        this.enseigneService = enseigneService;
+    }
 
     @GetMapping
-    public List<EnseigneDTO> getAllEnseignes() {
+    @Secured("ROLE_ADMIN")
+    public List<EnseigneDetailsDTO> getAllEnseignes() {
         return enseigneService.getAllEnseignes().stream()
-                .map(this::convertToDTO)
+                .map(this::convertToDetailsDTO)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/my")
+    @Secured("ROLE_ENSEIGNANT")
+    public List<EnseigneDetailsDTO> getMyEnseignes(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long enseignantId = userDetails.getUserId();
+        return enseigneService.getEnseignesByEnseignantId(enseignantId).stream()
+                .map(this::convertToDetailsDTO)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public EnseigneDTO getEnseigneById(@PathVariable Long id) {
-        Enseigne enseigne = enseigneService.getEnseigneById(id);
-        return convertToDTO(enseigne);
+    @Secured("ROLE_ADMIN")
+    public EnseigneDetailsDTO getEnseigneById(@PathVariable Long id) {
+        return convertToDetailsDTO(enseigneService.getEnseigneById(id));
     }
 
     @PostMapping
-    public EnseigneDTO createEnseigne(@RequestBody EnseigneDTO enseigneDTO) {
-        Enseigne enseigne = convertToEntity(enseigneDTO);
-        Enseigne createdEnseigne = enseigneService.createEnseigne(enseigne);
-        return convertToDTO(createdEnseigne);
+    @Secured("ROLE_ADMIN")
+    public EnseigneDetailsDTO createEnseigne(@RequestBody EnseigneDTO enseigneDTO) {
+        Enseigne created = enseigneService.createEnseigne(convertToEntity(enseigneDTO));
+        return convertToDetailsDTO(created);
     }
 
     @PutMapping("/{id}")
-    public EnseigneDTO updateEnseigne(@PathVariable Long id, @RequestBody EnseigneDTO enseigneDTO) {
-        Enseigne enseigne = convertToEntity(enseigneDTO);
-        Enseigne updatedEnseigne = enseigneService.updateEnseigne(id, enseigne);
-        return convertToDTO(updatedEnseigne);
+    @Secured("ROLE_ADMIN")
+    public EnseigneDetailsDTO updateEnseigne(@PathVariable Long id, @RequestBody EnseigneDTO enseigneDTO) {
+        Enseigne updated = enseigneService.updateEnseigne(id, convertToEntity(enseigneDTO));
+        return convertToDetailsDTO(updated);
     }
 
     @DeleteMapping("/{id}")
+    @Secured("ROLE_ADMIN")
     public void deleteEnseigne(@PathVariable Long id) {
         enseigneService.deleteEnseigne(id);
     }
@@ -54,18 +73,55 @@ public class EnseigneController {
         dto.setId(enseigne.getId());
         dto.setEnseignantId(enseigne.getEnseignant().getId());
         dto.setMatiereId(enseigne.getMatiere().getId());
-        dto.setNumSemestre(String.valueOf(enseigne.getNumSemestre()));
+        dto.setNumSemestre(enseigne.getNumSemestre().name());
         dto.setAnneeUniversitaireId(enseigne.getAnnee().getId());
-        dto.setTypeMatiere(enseigne.getTypeMatiere());
+        dto.setTypeMatiere(TypeMatiere.valueOf(enseigne.getTypeMatiere().name()));
+        return dto;
+    }
+
+    private EnseigneDetailsDTO convertToDetailsDTO(Enseigne enseigne) {
+        if (enseigne == null) return null;
+
+        EnseigneDetailsDTO dto = new EnseigneDetailsDTO();
+        dto.setId(enseigne.getId());
+
+        // Info Enseignant
+        if (enseigne.getEnseignant() != null) {
+            dto.setEnseignantId(enseigne.getEnseignant().getId());
+            dto.setEnseignantNom(enseigne.getEnseignant().getNom());
+            dto.setEnseignantPrenom(enseigne.getEnseignant().getPrenom());
+            dto.setEnseignantGrade(enseigne.getEnseignant().getGrade());
+        }
+
+        // Info Matière
+        if (enseigne.getMatiere() != null) {
+            dto.setMatiereId(enseigne.getMatiere().getId());
+            dto.setMatiereNom(enseigne.getMatiere().getNom());
+            dto.setMatiereCode(enseigne.getMatiere().getCode());
+        }
+
+        // Info Année Universitaire
+        if (enseigne.getAnnee() != null) {
+            dto.setAnneeId(enseigne.getAnnee().getId());
+            dto.setAnneeDateDebut(enseigne.getAnnee().getDateDebut());
+            dto.setAnneeDateFin(enseigne.getAnnee().getDateFin());
+        }
+
+        dto.setNumSemestre(enseigne.getNumSemestre() != null ? enseigne.getNumSemestre().name() : null);
+        dto.setTypeMatiere(enseigne.getTypeMatiere() != null ? enseigne.getTypeMatiere().name() : null);
+
         return dto;
     }
 
     private Enseigne convertToEntity(EnseigneDTO dto) {
         Enseigne enseigne = new Enseigne();
         enseigne.setId(dto.getId());
-        // Vous devez récupérer les entités associées par leurs IDs ici
-        enseigne.setNumSemestre(Semestre.valueOf(dto.getNumSemestre()));
-        enseigne.setTypeMatiere(dto.getTypeMatiere());
+        if (dto.getNumSemestre() != null) {
+            enseigne.setNumSemestre(Semestre.valueOf(dto.getNumSemestre()));
+        }
+        if (dto.getTypeMatiere() != null) {
+            enseigne.setTypeMatiere(TypeMatiere.valueOf(String.valueOf(dto.getTypeMatiere())));
+        }
         return enseigne;
     }
 }
