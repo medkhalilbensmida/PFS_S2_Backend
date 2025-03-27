@@ -1,11 +1,13 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.*;
@@ -18,6 +20,8 @@ import tn.fst.spring.backend_pfs_s2.service.CustomUserDetailsService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -60,7 +64,35 @@ public class AuthController {
             String token = jwtService.generateToken(userDetails);
             String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-            return ResponseEntity.ok(new AuthResponse(token, role));
+            // Vérifier le type d'utilisateur et retourner la réponse appropriée
+            if (role.equals("ROLE_ADMIN")) {
+                Administrateur admin = administrateurRepository.findByEmail(authRequest.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
+                return ResponseEntity.ok(new AuthResponseAdministrateur(
+                        token,
+                        role,
+                        admin.getId(),
+                        admin.getNom(),
+                        admin.getPrenom(),
+                        admin.getEmail(),
+                        admin.getTelephone(),
+                        admin.getFonction()
+                ));
+            } else {
+                Enseignant enseignant = enseignantRepository.findByEmail(authRequest.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException("Enseignant not found"));
+                return ResponseEntity.ok(new AuthResponseEnseignant(
+                        token,
+                        role,
+                        enseignant.getId(),
+                        enseignant.getNom(),
+                        enseignant.getPrenom(),
+                        enseignant.getEmail(),
+                        enseignant.getTelephone(),
+                        enseignant.getGrade(),
+                        enseignant.getDepartement()
+                ));
+            }
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Email ou mot de passe incorrect");
         } catch (Exception e) {
@@ -74,7 +106,9 @@ public class AuthController {
         try {
             // Vérification dans les deux tables
             if (emailExistsInAnyRepository(enseignantRequest.getEmail())) {
-                return ResponseEntity.badRequest().body("Email déjà utilisé");
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ErrorResponse("EMAIL_EXISTS", "Cet email est déjà utilisé"));
             }
 
             Enseignant enseignant = new Enseignant();
@@ -87,7 +121,9 @@ public class AuthController {
             enseignant.setDepartement(enseignantRequest.getDepartement());
 
             enseignantRepository.save(enseignant);
-            return ResponseEntity.ok("Enseignant enregistré avec succès");
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("message", "Enseignant enregistré avec succès"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erreur lors de l'inscription");
         }
@@ -99,7 +135,9 @@ public class AuthController {
         try {
             // Vérification dans les deux tables
             if (emailExistsInAnyRepository(adminRequest.getEmail())) {
-                return ResponseEntity.badRequest().body("Email déjà utilisé");
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ErrorResponse("EMAIL_EXISTS", "Cet email est déjà utilisé"));
             }
 
             Administrateur admin = new Administrateur();
@@ -111,7 +149,9 @@ public class AuthController {
             admin.setFonction(adminRequest.getFonction());
 
             administrateurRepository.save(admin);
-            return ResponseEntity.ok("Administrateur enregistré avec succès");
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("message", "Administrateur enregistré avec succès"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Erreur lors de l'inscription");
         }

@@ -1,8 +1,10 @@
-package tn.fst.spring.backend_pfs_s2.service.mail;
+package tn.fst.spring.backend_pfs_s2.service;
 
 import java.util.Map;
 
 import java.util.HashMap;
+
+import jakarta.annotation.PostConstruct;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -10,11 +12,10 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import tn.fst.spring.backend_pfs_s2.service.dto.MailRequest;
+import tn.fst.spring.backend_pfs_s2.dto.MailRequest;
 /**
  * Service for sending emails using a template engine.
  * This service utilizes JavaMailSender for sending emails and SpringTemplateEngine
@@ -25,7 +26,7 @@ import tn.fst.spring.backend_pfs_s2.service.dto.MailRequest;
  * - SpringTemplateEngine: For processing email templates.
  * 
  * Methods:
- * - {@link #sendEmail(String, String, String, Map)}: Sends an email with the specified
+ * - {@link #/sendEmail(String, String, String, Map)}: Sends an email with the specified
  *   recipient, subject, template, and context variables.
  */
 @Service
@@ -66,7 +67,7 @@ public class MailService {
 
     }
 
-    @PostConstruct
+    //@PostConstruct
     public void sendTestEmail() {
         try {
             Map<String, Object> variables = new HashMap<>();
