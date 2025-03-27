@@ -3,6 +3,8 @@ package tn.fst.spring.backend_pfs_s2.service;
 import java.util.Map;
 
 import java.util.HashMap;
+
+import jakarta.annotation.PostConstruct;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ import tn.fst.spring.backend_pfs_s2.dto.MailRequest;
  * - SpringTemplateEngine: For processing email templates.
  * 
  * Methods:
- * - {@link #sendEmail(String, String, String, Map)}: Sends an email with the specified
+ * - {@link #/sendEmail(String, String, String, Map)}: Sends an email with the specified
  *   recipient, subject, template, and context variables.
  */
 @Service

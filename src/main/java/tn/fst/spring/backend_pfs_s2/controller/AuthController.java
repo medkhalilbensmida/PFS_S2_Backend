@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.*;
@@ -63,7 +64,35 @@ public class AuthController {
             String token = jwtService.generateToken(userDetails);
             String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-            return ResponseEntity.ok(new AuthResponse(token, role));
+            // Vérifier le type d'utilisateur et retourner la réponse appropriée
+            if (role.equals("ROLE_ADMIN")) {
+                Administrateur admin = administrateurRepository.findByEmail(authRequest.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
+                return ResponseEntity.ok(new AuthResponseAdministrateur(
+                        token,
+                        role,
+                        admin.getId(),
+                        admin.getNom(),
+                        admin.getPrenom(),
+                        admin.getEmail(),
+                        admin.getTelephone(),
+                        admin.getFonction()
+                ));
+            } else {
+                Enseignant enseignant = enseignantRepository.findByEmail(authRequest.getEmail())
+                        .orElseThrow(() -> new UsernameNotFoundException("Enseignant not found"));
+                return ResponseEntity.ok(new AuthResponseEnseignant(
+                        token,
+                        role,
+                        enseignant.getId(),
+                        enseignant.getNom(),
+                        enseignant.getPrenom(),
+                        enseignant.getEmail(),
+                        enseignant.getTelephone(),
+                        enseignant.getGrade(),
+                        enseignant.getDepartement()
+                ));
+            }
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Email ou mot de passe incorrect");
         } catch (Exception e) {
