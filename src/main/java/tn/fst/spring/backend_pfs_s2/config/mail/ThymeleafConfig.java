@@ -1,4 +1,4 @@
-package tn.fst.spring.backend_pfs_s2.config;
+package tn.fst.spring.backend_pfs_s2.config.mail;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
