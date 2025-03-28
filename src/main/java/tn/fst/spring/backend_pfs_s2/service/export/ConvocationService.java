@@ -6,8 +6,11 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Text;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.layout.properties.VerticalAlignment;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.fst.spring.backend_pfs_s2.model.*;
@@ -32,42 +35,66 @@ public class ConvocationService {
     @Autowired
     private SessionExamenRepository sessionExamenRepository;
 
-    private void addHeader(Document document, SessionExamen session) {
-        // Left side header
+    private void addHeader(Document document, SurveillanceFilterDTO filterDTO) {
         Table headerTable = new Table(UnitValue.createPercentArray(new float[]{50, 50}));
         headerTable.setWidth(UnitValue.createPercentValue(100));
+        headerTable.setMinHeight(60); // Add minimum height to ensure vertical space
 
+        // Left cell
         Cell leftCell = new Cell();
-        leftCell.add(new Paragraph("Université Tunis El Manar")
-                .setTextAlignment(TextAlignment.LEFT)
-                .setFontSize(12)
-                .setBold());
-        leftCell.add(new Paragraph("Faculté des Sciences de Tunis")
-                .setTextAlignment(TextAlignment.LEFT)
-                .setFontSize(12));
-        leftCell.add(new Paragraph("Département des Sciences Informatiques")
-                .setTextAlignment(TextAlignment.LEFT)
-                .setFontSize(12));
         leftCell.setBorder(Border.NO_BORDER);
+        leftCell.setVerticalAlignment(VerticalAlignment.MIDDLE); // Add vertical alignment
 
-        // Right side header
+        Paragraph leftParagraph = new Paragraph();
+        leftParagraph.add(new Text("Université Tunis El Manar").setBold())
+                .add("\nFaculté des Sciences de Tunis")
+                .add("\nDépartement des Sciences Informatiques");
+        leftParagraph.setTextAlignment(TextAlignment.LEFT)
+                .setFontSize(12);
+
+        leftCell.add(leftParagraph);
+
+        // Right cell
         Cell rightCell = new Cell();
-        rightCell.add(new Paragraph(String.format("Année Universitaire %s",
-                session.getAnnee().toString()))
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setFontSize(12));
         rightCell.setBorder(Border.NO_BORDER);
+        rightCell.setVerticalAlignment(VerticalAlignment.MIDDLE); // Add vertical alignment
 
+        String yearText = "Année Universitaire: " +
+                (filterDTO.getAnneeUniversitaire() != null ?
+                        filterDTO.getAnneeUniversitaire() : "Toutes");
+
+        Paragraph rightParagraph = new Paragraph(yearText)
+                .setTextAlignment(TextAlignment.RIGHT)
+                .setFontSize(12);
+
+        rightCell.add(rightParagraph);
+
+        // Add cells to table
         headerTable.addCell(leftCell);
         headerTable.addCell(rightCell);
+
         document.add(headerTable);
         document.add(new Paragraph("\n"));
     }
+    private void addTitle(Document document, SurveillanceFilterDTO filterDTO) {
+        StringBuilder titleBuilder = new StringBuilder();
+        titleBuilder.append("CONVOCATION POUR LA SURVEILLANCE DES EXAMENS\n");
 
-    private void addTitle(Document document, SessionExamen session) {
-        document.add(new Paragraph(String.format("CONVOCATION POUR LA SURVEILLANCE DES EXAMENS\nSession %s %s",
-                session.getType().toString(),
-                session.getNumSemestre().toString()))
+
+        // Add session type from filter if available, otherwise from current session
+        if (filterDTO.getTypeSession() != null) {
+            titleBuilder.append("Session ");
+            titleBuilder.append(filterDTO.getTypeSession());
+        } else {
+            titleBuilder.append("TOUTES LES SESSIONS");
+        }
+
+        // Add semester from filter if available
+        if (filterDTO.getSemestre() != null) {
+            titleBuilder.append(" ").append(filterDTO.getSemestre());
+        }
+
+        document.add(new Paragraph(titleBuilder.toString())
                 .setTextAlignment(TextAlignment.CENTER)
                 .setFontSize(14)
                 .setBold());
@@ -75,11 +102,21 @@ public class ConvocationService {
 
 
 
-    public byte[] generateConvocation(Long enseignantId) throws Exception {
+    public byte[] generateConvocation(Long enseignantId, SurveillanceFilterDTO filterDTO) throws Exception {
         Enseignant enseignant = enseignantRepository.findById(enseignantId)
-                .orElseThrow(() -> new RuntimeException("Enseignant non trouvé"));
+                .orElseThrow(() -> new EntityNotFoundException("Enseignant non trouvé"));
 
-        // Get current session
+        // Get filtered surveillances for this teacher
+        List<Surveillance> filteredSurveillances = surveillanceService
+                .filterSurveillances(filterDTO)
+                .stream()
+                .filter(s -> (s.getEnseignantPrincipal() != null &&
+                        s.getEnseignantPrincipal().getId().equals(enseignantId)) ||
+                        (s.getEnseignantSecondaire() != null &&
+                                s.getEnseignantSecondaire().getId().equals(enseignantId)))
+                .collect(Collectors.toList());
+
+        // Get current active session for header
         SessionExamen currentSession = sessionExamenRepository.findAll().stream()
                 .filter(SessionExamen::getEstActive)
                 .findFirst()
@@ -90,73 +127,109 @@ public class ConvocationService {
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
 
-        addHeader(document, currentSession);
-        addTitle(document, currentSession);
-        addTeacherInfo(document, enseignant);
-        addSurveillancesTable(document, enseignant);
-        addRecapTable(document, enseignant);
+        try {
+            addHeader(document, filterDTO); // Pass filterDTO here
+            addTitle(document, filterDTO);
+            addTeacherInfo(document, enseignant);
+            addSurveillancesTable(document, enseignant, filteredSurveillances);
+            addRecapTable(document, enseignant, filteredSurveillances);
+            addSummary(document, enseignant, filteredSurveillances);
+        } finally {
+            document.close();
+        }
 
-        document.add(new Paragraph("\n\nSignature du Chef de Département")
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setMarginTop(50));
-
-        document.close();
         return baos.toByteArray();
     }
 
+    private void addSurveillancesTable(Document document, Enseignant enseignant, List<Surveillance> surveillances) {
+        Table table = new Table(UnitValue.createPercentArray(new float[]{20, 15, 15, 30, 20}));
+        table.setWidth(UnitValue.createPercentValue(100));
 
-   private void addRecapTable(Document document, Enseignant enseignant) {
-       Table recapTable = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
-       recapTable.setWidth(UnitValue.createPercentValue(100));
+        // Add headers
+        addCell(table, "Date", true);
+        addCell(table, "Début", true);
+        addCell(table, "Fin", true);
+        addCell(table, "Matière", true);
+        addCell(table, "Salle", true);
 
-       // Headers
-       recapTable.addCell(new Cell().add(new Paragraph("Type").setBold()));
-       recapTable.addCell(new Cell().add(new Paragraph("Nombre de surveillances").setBold()));
+        // Add data rows if any exist
+        if (!surveillances.isEmpty()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
-       // Get all planned surveillances for this teacher
-       List<Surveillance> allSurveillances = surveillanceService.getSurveillancesByEnseignant(enseignant.getId())
-               .stream()
-               .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE && s.getSessionExamen() != null)
-               .collect(Collectors.toList());
+            surveillances.stream()
+                    .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE)
+                    .forEach(s -> {
+                        addCell(table, dateFormat.format(s.getDateDebut()), false);
+                        addCell(table, timeFormat.format(s.getDateDebut()), false);
+                        addCell(table, timeFormat.format(s.getDateFin()), false);
+                        addCell(table, s.getMatiere().getNom(), false);
+                        addCell(table, s.getSalle().getNumero(), false);
+                    });
+        } else {
+            // Add an empty row with a message
+            Cell emptyCell = new Cell(1, 5)
+                    .add(new Paragraph("Aucune surveillance trouvée"))
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setItalic();
+            table.addCell(emptyCell);
+        }
 
-       // Count DS surveillances
-       long dsCount = allSurveillances.stream()
-               .filter(s -> s.getSessionExamen().getType() == TypeSession.DS)
-               .count();
+        document.add(table);
+    }
 
-       // Add DS count at the beginning
-       recapTable.addCell(new Cell().add(new Paragraph("Surveillances DS").setBold()));
-       recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount))));
+    private void addRecapTable(Document document, Enseignant enseignant, List<Surveillance> surveillances) {
+        Table recapTable = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
+        recapTable.setWidth(UnitValue.createPercentValue(100));
 
-       // Filter and count Exam surveillances by niveau
-       Map<String, Long> examSurveillancesByNiveau = allSurveillances.stream()
-               .filter(s -> (s.getSessionExamen().getType() == TypeSession.PRINCIPALE || s.getSessionExamen().getType() == TypeSession.RATTRAPAGE  ) )
-               .collect(Collectors.groupingBy(
-                       s -> s.getMatiere().getNiveau(),
-                       Collectors.counting()
-               ));
+        // Headers
+        recapTable.addCell(new Cell().add(new Paragraph("Type").setBold()));
+        recapTable.addCell(new Cell().add(new Paragraph("Nombre de surveillances").setBold()));
 
-       // Add exam surveillances counts by section
-       long totalExams = 0;
-       for (Map.Entry<String, Long> entry : examSurveillancesByNiveau.entrySet()) {
-           recapTable.addCell(new Cell().add(new Paragraph("Examen " + entry.getKey())));
-           recapTable.addCell(new Cell().add(new Paragraph(entry.getValue().toString())));
-           totalExams += entry.getValue();
-       }
+        // Count DS surveillances
+        long dsCount = surveillances.stream()
+                .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE &&
+                        s.getSessionExamen().getType() == TypeSession.DS)
+                .count();
 
-       // Add total exam surveillances
-       if (!examSurveillancesByNiveau.isEmpty()) {
-           recapTable.addCell(new Cell().add(new Paragraph("Total Examens").setBold()));
-           recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(totalExams)).setBold()));
-       }
+        // Only show DS count if there are DS surveillances
+        if (dsCount > 0) {
+            recapTable.addCell(new Cell().add(new Paragraph("Surveillances DS").setBold()));
+            recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount))));
+        }
 
-       // Add grand total (DS + Exams)
-       recapTable.addCell(new Cell().add(new Paragraph("TOTAL GÉNÉRAL").setBold()));
-       recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount + totalExams)).setBold()));
+        // Count exam surveillances by niveau
+        Map<String, Long> examSurveillancesByNiveau = surveillances.stream()
+                .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE &&
+                        (s.getSessionExamen().getType() == TypeSession.PRINCIPALE ||
+                                s.getSessionExamen().getType() == TypeSession.RATTRAPAGE))
+                .collect(Collectors.groupingBy(
+                        s -> s.getMatiere().getNiveau(),
+                        Collectors.counting()
+                ));
 
-       document.add(new Paragraph("\nRécapitulatif des surveillances par type:\n").setBold());
-       document.add(recapTable);
-   }
+        // Add exam counts only for niveaux that have surveillances
+        long totalExams = 0;
+        for (Map.Entry<String, Long> entry : examSurveillancesByNiveau.entrySet()) {
+            if (entry.getValue() > 0) {  // Only add if there are surveillances for this niveau
+                recapTable.addCell(new Cell().add(new Paragraph("Examen " + entry.getKey())));
+                recapTable.addCell(new Cell().add(new Paragraph(entry.getValue().toString())));
+                totalExams += entry.getValue();
+            }
+        }
+
+        // Only add total if there are any surveillances
+        if (dsCount > 0 || totalExams > 0) {
+            recapTable.addCell(new Cell().add(new Paragraph("TOTAL GÉNÉRAL").setBold()));
+            recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount + totalExams)).setBold()));
+
+            document.add(new Paragraph("\nRécapitulatif des surveillances par type:\n").setBold());
+            document.add(recapTable);
+        } else {
+            document.add(new Paragraph("\nAucune surveillance à récapituler").setItalic());
+        }
+    }
+
 
 
     private void addTeacherInfo(Document document, Enseignant enseignant) {
@@ -170,37 +243,8 @@ public class ConvocationService {
                 "\n\n"));
     }
 
-    private void addSurveillancesTable(Document document, Enseignant enseignant) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{20, 15, 15, 30, 20}));
-        table.setWidth(UnitValue.createPercentValue(100));
 
-        // En-têtes
-        addCell(table, "Date", true);
-        addCell(table, "Début", true);
-        addCell(table, "Fin", true);
-        addCell(table, "Matière", true);
-        addCell(table, "Salle", true);
-
-        // Données
-        List<Surveillance> surveillances = surveillanceService.getSurveillancesByEnseignant(enseignant.getId());
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-
-        for (Surveillance s : surveillances) {
-            if (s.getStatut() == StatutSurveillance.PLANIFIEE) {
-                addCell(table, dateFormat.format(s.getDateDebut()), false);
-                addCell(table, timeFormat.format(s.getDateDebut()), false);
-                addCell(table, timeFormat.format(s.getDateFin()), false);
-                addCell(table, s.getMatiere().getNom(), false);
-                addCell(table, s.getSalle().getNumero(), false);
-            }
-        }
-
-        document.add(table);
-    }
-
-    private void addSummary(Document document, Enseignant enseignant) {
-        List<Surveillance> surveillances = surveillanceService.getSurveillancesByEnseignant(enseignant.getId());
+    private void addSummary(Document document, Enseignant enseignant, List<Surveillance> surveillances) {
         int totalSurveillances = surveillances.size();
 
         document.add(new Paragraph("\nRécapitulatif:\n")

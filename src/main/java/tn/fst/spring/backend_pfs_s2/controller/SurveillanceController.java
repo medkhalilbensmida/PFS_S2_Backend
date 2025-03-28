@@ -2,11 +2,8 @@ package tn.fst.spring.backend_pfs_s2.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.persistence.EntityNotFoundException; // Ajoutez cet import
-import org.springframework.http.HttpStatus;          // Ajoutez cet import
-import org.springframework.http.ResponseEntity;     // Ajoutez cet import
+import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.AssignementRequestDTO; // Ajoutez cet import
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDTO;
@@ -28,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpHeaders;
+import tn.fst.spring.backend_pfs_s2.service.export.SurveillanceFilterDTO;
 
 @RestController
 @RequestMapping("/api/surveillances")
@@ -227,37 +224,63 @@ public class SurveillanceController {
 
 
     @GetMapping(value = "/export/excel", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public void exportToExcel(HttpServletResponse response) throws IOException {
+    public void exportToExcel(
+            HttpServletResponse response,
+            @RequestParam(required = false) String anneeUniversitaire, // Changed from Long to String
+            @RequestParam(required = false) Semestre semestre,
+            @RequestParam(required = false) TypeSession typeSession
+    ) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=\"surveillances.xlsx\"");
 
-        surveillanceService.exportToExcel(response.getOutputStream());
+        SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+        filterDTO.setAnneeUniversitaire(anneeUniversitaire);
+        filterDTO.setSemestre(semestre);
+        filterDTO.setTypeSession(typeSession);
+
+        surveillanceService.exportToExcel(response.getOutputStream(), filterDTO);
     }
-    @GetMapping(value = "/export/csv", produces = "text/csv;charset=UTF-8")
-    public void exportToCsv(HttpServletResponse response) throws IOException {
-        response.setContentType("text/csv;charset=UTF-8");
+    @GetMapping(value = "/export/csv", produces = "text/csv")
+    public void exportToCsv(
+            HttpServletResponse response,
+            @RequestParam(required = false) String anneeUniversitaire,
+            @RequestParam(required = false) Semestre semestre,
+            @RequestParam(required = false) TypeSession typeSession
+    ) throws IOException {
+        response.setContentType("text/csv");
         response.setHeader("Content-Disposition", "attachment; filename=\"surveillances.csv\"");
-        response.setCharacterEncoding("UTF-8");
 
-        // Write UTF-8 BOM for Excel compatibility
-        byte[] bom = new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF };
-        response.getOutputStream().write(bom);
+        SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+        filterDTO.setAnneeUniversitaire(anneeUniversitaire);
+        filterDTO.setSemestre(semestre);
+        filterDTO.setTypeSession(typeSession);
 
-        // Directly use the OutputStream instead of creating a Writer
-        surveillanceService.exportToCsv(response.getOutputStream());
+        surveillanceService.exportToCsv(response.getOutputStream(), filterDTO);
     }
 
-    @GetMapping("/enseignants/{id}/convocation")
-    public ResponseEntity<byte[]> generateConvocation(@PathVariable Long id) {
-        try {
-            byte[] pdfContent = convocationService.generateConvocation(id);
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=convocation.pdf")
-                    .body(pdfContent);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+    @GetMapping(value = "/generateconvocation/{enseignantId}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generateConvocation(
+            @PathVariable Long enseignantId,
+            @RequestParam(required = false) String anneeUniversitaire,
+            @RequestParam(required = false) Semestre semestre,
+            @RequestParam(required = false) TypeSession typeSession) throws Exception {
+
+        SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+        filterDTO.setAnneeUniversitaire(anneeUniversitaire);
+        filterDTO.setSemestre(semestre);
+        filterDTO.setTypeSession(typeSession);
+
+        byte[] pdfContent = convocationService.generateConvocation(enseignantId, filterDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.add("Content-Disposition", "attachment; filename=convocation.pdf");
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(pdfContent);
     }
 }
