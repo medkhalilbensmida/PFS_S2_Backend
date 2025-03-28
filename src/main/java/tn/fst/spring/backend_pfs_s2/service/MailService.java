@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

@@ -27,6 +27,8 @@ public class Notification {
     @JoinColumn(name = "surveillance_id")
     private Surveillance surveillance;
 
+    private Boolean emailEnvoye = false; 
+
     // Constructeur par défaut
     public Notification() {}
 
@@ -38,5 +40,15 @@ public class Notification {
         this.type = type;
         this.destinataire = destinataire;
         this.surveillance = surveillance;
+        this.emailEnvoye = false;
+    }
+    // Method to mark email as sent
+    public void markEmailAsSent() {
+        this.emailEnvoye = true;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.dateEnvoi = new Date();
     }
 }

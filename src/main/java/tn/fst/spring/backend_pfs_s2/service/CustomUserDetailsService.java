@@ -4,6 +4,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 import tn.fst.spring.backend_pfs_s2.model.Administrateur;
 import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.repository.AdministrateurRepository;
