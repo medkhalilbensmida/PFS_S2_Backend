@@ -20,6 +20,7 @@ import java.io.OutputStream;
 
 import tn.fst.spring.backend_pfs_s2.service.export.CsvExportService;
 import tn.fst.spring.backend_pfs_s2.service.export.ExcelExportService;
+import tn.fst.spring.backend_pfs_s2.service.export.SurveillanceFilterDTO;
 
 import java.util.Optional; // Importation ajoutée (si Optional est utilisé)
 
@@ -270,7 +271,7 @@ public class SurveillanceService {
         return disponibiliteRepository.save(disponibilite);
     }
 
-    public void exportToCsv(OutputStream outputStream) throws IOException {
+    /*public void exportToCsv(OutputStream outputStream) throws IOException {
         List<Surveillance> surveillances = getAvailableSurveillances();
         csvExportService.export(surveillances, outputStream);
     }
@@ -279,7 +280,7 @@ public class SurveillanceService {
         List<Surveillance> surveillances = getAvailableSurveillances();
         excelExportService.export(surveillances, outputStream);
     }
-
+*/
     // Add this method to SurveillanceService class
     public List<Surveillance> getAvailableSurveillances() {
         return surveillanceRepository.findAll().stream()
@@ -308,4 +309,47 @@ public class SurveillanceService {
                         (s.getEnseignantSecondaire() != null && s.getEnseignantSecondaire().getId().equals(enseignantId)))
                 .collect(Collectors.toList());
     }
+
+    public List<Surveillance> filterSurveillances(SurveillanceFilterDTO filterDTO) {
+        return surveillanceRepository.findAll().stream()
+                .filter(surveillance -> {
+                    boolean matches = true;
+
+                    if (filterDTO.getAnneeUniversitaire() != null && !filterDTO.getAnneeUniversitaire().isEmpty()) {
+                        String[] years = filterDTO.getAnneeUniversitaire().split("-");
+                        if (years.length == 2) {
+                            int startYear = Integer.parseInt(years[0]);
+                            int endYear = Integer.parseInt(years[1]);
+
+                            // Get the year from surveillance's session
+                            int surveillanceYear = surveillance.getSessionExamen().getAnnee().getDateDebut().getYear() + 1900;
+                            matches = matches && (surveillanceYear == startYear);
+                        }
+                    }
+
+                    if (filterDTO.getSemestre() != null) {
+                        matches = matches && surveillance.getSessionExamen().getNumSemestre()
+                                .equals(filterDTO.getSemestre());
+                    }
+
+                    if (filterDTO.getTypeSession() != null) {
+                        matches = matches && surveillance.getSessionExamen().getType()
+                                .equals(filterDTO.getTypeSession());
+                    }
+
+                    return matches;
+                })
+                .collect(Collectors.toList());
+    }
+    // Modify existing export methods
+    public void exportToCsv(OutputStream outputStream, SurveillanceFilterDTO filterDTO) throws IOException {
+        List<Surveillance> surveillances = filterSurveillances(filterDTO);
+        csvExportService.export(surveillances, outputStream);
+    }
+
+    public void exportToExcel(OutputStream outputStream, SurveillanceFilterDTO filterDTO) throws IOException {
+        List<Surveillance> surveillances = filterSurveillances(filterDTO);
+        excelExportService.export(surveillances, outputStream);
+    }
+
 }
