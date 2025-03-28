@@ -283,4 +283,27 @@ public class SurveillanceController {
                 .headers(headers)
                 .body(pdfContent);
     }
+    @GetMapping(value = "/generateallconvocations", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generateAllConvocations(
+            @RequestParam(required = false) String anneeUniversitaire,
+            @RequestParam(required = false) Semestre semestre,
+            @RequestParam(required = false) TypeSession typeSession) throws Exception {
+
+        SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+        filterDTO.setAnneeUniversitaire(anneeUniversitaire);
+        filterDTO.setSemestre(semestre);
+        filterDTO.setTypeSession(typeSession);
+
+        byte[] pdfContent = convocationService.generateAllConvocations(filterDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.add("Content-Disposition", "attachment; filename=all_convocations.pdf");
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(pdfContent);
+    }
 }

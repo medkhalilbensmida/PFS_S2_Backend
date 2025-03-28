@@ -3,10 +3,7 @@ package tn.fst.spring.backend_pfs_s2.service.export;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.element.*;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
@@ -264,5 +261,60 @@ public class ConvocationService {
         }
         cell.setTextAlignment(TextAlignment.CENTER);
         table.addCell(cell);
+    }
+
+    public byte[] generateAllConvocations(SurveillanceFilterDTO filterDTO) throws Exception {
+        // Get all teachers
+        List<Enseignant> allEnseignants = enseignantRepository.findAll();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfWriter writer = new PdfWriter(baos);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        try {
+            boolean isFirstPage = true;
+
+            for (Enseignant enseignant : allEnseignants) {
+                // Get filtered surveillances for this teacher
+                List<Surveillance> filteredSurveillances = surveillanceService
+                        .filterSurveillances(filterDTO)
+                        .stream()
+                        .filter(s -> (s.getEnseignantPrincipal() != null &&
+                                s.getEnseignantPrincipal().getId().equals(enseignant.getId())) ||
+                                (s.getEnseignantSecondaire() != null &&
+                                        s.getEnseignantSecondaire().getId().equals(enseignant.getId())))
+                        .collect(Collectors.toList());
+
+                // Only create a convocation if teacher has surveillances
+                if (!filteredSurveillances.isEmpty()) {
+                    if (!isFirstPage) {
+                        // Add a new page for each teacher except the first one
+                        document.add(new AreaBreak());
+                    }
+
+                    addHeader(document, filterDTO);
+                    addTitle(document, filterDTO);
+                    addTeacherInfo(document, enseignant);
+                    addSurveillancesTable(document, enseignant, filteredSurveillances);
+                    addRecapTable(document, enseignant, filteredSurveillances);
+                    addSummary(document, enseignant, filteredSurveillances);
+
+                    isFirstPage = false;
+                }
+            }
+
+            // Add a message if no convocations were generated
+            if (isFirstPage) {
+                document.add(new Paragraph("Aucune convocation à générer pour les critères sélectionnés.")
+                        .setTextAlignment(TextAlignment.CENTER)
+                        .setFontSize(14)
+                        .setBold());
+            }
+        } finally {
+            document.close();
+        }
+
+        return baos.toByteArray();
     }
 }
