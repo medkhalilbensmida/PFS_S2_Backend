@@ -308,4 +308,12 @@ public class SurveillanceService {
                         (s.getEnseignantSecondaire() != null && s.getEnseignantSecondaire().getId().equals(enseignantId)))
                 .collect(Collectors.toList());
     }
+
+    // New service method
+    public List<Surveillance> getSurveillancesBySessionId(Long sessionId) {
+        if (!sessionExamenRepository.existsById(sessionId)) {
+            throw new EntityNotFoundException("Session d'examen non trouvée avec l'ID : " + sessionId);
+        }
+        return surveillanceRepository.findBySessionExamenId(sessionId);
+    }
 }

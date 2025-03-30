@@ -17,17 +17,6 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
     List<Surveillance> findByDateDebutAndDateFin(Date dateDebut, Date dateFin);
     boolean existsByDateDebutAndDateFin(Date dateDebut, Date dateFin);
 
-    @Query("SELECT s FROM Surveillance s WHERE " +
-            "(s.enseignantPrincipal.id = :enseignantId OR s.enseignantSecondaire.id = :enseignantId) " +
-            "AND s.id <> :excludeSurveillanceId " +
-            "AND (s.dateDebut < :dateFin AND s.dateFin > :dateDebut)")
-    List<Surveillance> findOverlappingSurveillancesForEnseignant(
-            @Param("enseignantId") Long enseignantId,
-            @Param("dateDebut") Date dateDebut,
-            @Param("dateFin") Date dateFin,
-            @Param("excludeSurveillanceId") Long excludeSurveillanceId
-    );
-
     @Query("SELECT COUNT(s) > 0 FROM Surveillance s WHERE s.sessionExamen.id = :sessionId")
     boolean existsBySessionExamenId(@Param("sessionId") Long sessionId);
 
@@ -66,4 +55,19 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
             @Param("dateDebut") Date dateDebut,
             @Param("dateFin") Date dateFin,
             @Param("excludeSurveillanceId") Long excludeSurveillanceId);
+
+    // Find surveillances where the given enseignant is either principal or secondaire
+    List<Surveillance> findByEnseignantPrincipalIdOrEnseignantSecondaireId(Long enseignantPrincipalId, Long enseignantSecondaireId);
+
+    // Custom query to find surveillances that overlap with a given time range for a specific enseignant,
+    // excluding a specific surveillance ID (useful for checking conflicts when updating/assigning)
+    @Query("SELECT s FROM Surveillance s WHERE s.id <> :excludeSurveillanceId AND " +
+           "((s.enseignantPrincipal.id = :enseignantId) OR (s.enseignantSecondaire.id = :enseignantId)) AND " +
+           "((s.dateDebut < :endDate AND s.dateFin > :startDate))") // Overlap condition
+    List<Surveillance> findOverlappingSurveillancesForEnseignant(
+            @Param("enseignantId") Long enseignantId,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("excludeSurveillanceId") Long excludeSurveillanceId
+    );
 }
