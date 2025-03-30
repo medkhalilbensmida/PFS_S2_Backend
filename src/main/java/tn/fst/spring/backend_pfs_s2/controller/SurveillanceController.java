@@ -63,8 +63,16 @@ public class SurveillanceController {
 
 
     @GetMapping
-    public List<SurveillanceDTO> getAllSurveillances() {
-        return surveillanceService.getAllSurveillances().stream()
+    public List<SurveillanceDTO> getAllSurveillances(
+            @RequestParam(required = false) Long sessionId // Make sessionId optional
+    ) {
+        List<Surveillance> surveillances;
+        if (sessionId != null) {
+            surveillances = surveillanceService.getSurveillancesBySessionId(sessionId);
+        } else {
+            surveillances = surveillanceService.getAllSurveillances();
+        }
+        return surveillances.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
