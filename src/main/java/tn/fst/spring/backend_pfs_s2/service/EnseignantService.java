@@ -24,6 +24,7 @@ public class EnseignantService {
     public Enseignant getEnseignantById(Long id) {
         return enseignantRepository.findById(id).orElse(null);
     }
+
     public Enseignant createEnseignant(Enseignant enseignant) {
         return enseignantRepository.save(enseignant);
     }
