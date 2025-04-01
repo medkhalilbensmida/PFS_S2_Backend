@@ -34,12 +34,10 @@ public class SessionExamenService {
 
     @Transactional
     public SessionExamen createSession(SessionExamen sessionExamen) {
-        // Vérification que l'ID n'est pas défini manuellement
         if (sessionExamen.getId() != null) {
             throw new IllegalArgumentException("L'ID ne doit pas être fourni lors de la création");
         }
 
-        // Vérification de l'année universitaire
         if (sessionExamen.getAnnee() == null || sessionExamen.getAnnee().getId() == null) {
             throw new IllegalArgumentException("L'année universitaire doit être spécifiée");
         }
@@ -49,7 +47,6 @@ public class SessionExamenService {
 
         sessionExamen.setAnnee(annee);
 
-        // Validation des dates
         if (sessionExamen.getDateDebut() == null || sessionExamen.getDateFin() == null) {
             throw new IllegalArgumentException("Les dates de début et fin doivent être spécifiées");
         }
@@ -63,11 +60,10 @@ public class SessionExamenService {
 
     @Transactional
     public SessionExamen updateSession(Long id, SessionExamen sessionExamen) {
-        if (!sessionExamenRepository.existsById(id)) {
-            throw new IllegalArgumentException("Session non trouvée avec l'ID: " + id);
-        }
+        SessionExamen existingSession = sessionExamenRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Session non trouvée avec l'ID: " + id));
 
-        // Mêmes validations que pour la création
+        // Mettre à jour les champs un par un au lieu de remplacer l'entité
         if (sessionExamen.getAnnee() == null || sessionExamen.getAnnee().getId() == null) {
             throw new IllegalArgumentException("L'année universitaire doit être spécifiée");
         }
@@ -75,28 +71,31 @@ public class SessionExamenService {
         AnneeUniversitaire annee = anneeUniversitaireRepository.findById(sessionExamen.getAnnee().getId())
                 .orElseThrow(() -> new IllegalArgumentException("L'année universitaire avec l'ID " + sessionExamen.getAnnee().getId() + " n'existe pas"));
 
-        sessionExamen.setAnnee(annee);
+        existingSession.setAnnee(annee);
+        existingSession.setDateDebut(sessionExamen.getDateDebut());
+        existingSession.setDateFin(sessionExamen.getDateFin());
+        existingSession.setType(sessionExamen.getType());
+        existingSession.setEstActive(sessionExamen.getEstActive());
+        existingSession.setNumSemestre(sessionExamen.getNumSemestre());
 
-        if (sessionExamen.getDateDebut().after(sessionExamen.getDateFin())) {
+        if (existingSession.getDateDebut().after(existingSession.getDateFin())) {
             throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
         }
 
-        sessionExamen.setId(id);
-        return sessionExamenRepository.save(sessionExamen);
+        return sessionExamenRepository.save(existingSession);
     }
 
     @Transactional
     public void deleteSession(Long id) {
-        if (!sessionExamenRepository.existsById(id)) {
-            throw new IllegalArgumentException("Session non trouvée avec l'ID: " + id);
-        }
+        SessionExamen session = sessionExamenRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Session non trouvée avec l'ID: " + id));
 
-        if (surveillanceRepository.existsBySessionExamenId(id)) {
+        if (!session.getSurveillances().isEmpty()) {
             throw new DataIntegrityViolationException(
                     "Impossible de supprimer la session car elle est liée à des surveillances"
             );
         }
 
-        sessionExamenRepository.deleteById(id);
+        sessionExamenRepository.delete(session);
     }
 }

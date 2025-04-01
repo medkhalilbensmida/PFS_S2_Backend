@@ -47,7 +47,6 @@ public class SessionExamenController {
     @PostMapping
     public ResponseEntity<?> createSession(@RequestBody SessionExamenDTO sessionDTO) {
         try {
-            // Ne pas inclure l'ID dans la création
             SessionExamen session = convertToEntity(sessionDTO);
             SessionExamen created = sessionService.createSession(session);
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -101,7 +100,6 @@ public class SessionExamenController {
 
     private SessionExamenDTO convertToDTO(SessionExamen session) {
         SessionExamenDTO dto = new SessionExamenDTO();
-        // Utilisez le constructeur ou les setters
         dto.setId(session.getId());
         dto.setDateDebut(session.getDateDebut());
         dto.setDateFin(session.getDateFin());
@@ -118,9 +116,9 @@ public class SessionExamenController {
 
         return dto;
     }
+
     private SessionExamen convertToEntity(SessionExamenDTO dto) {
         SessionExamen session = new SessionExamen();
-        // Ne pas définir l'ID manuellement
         session.setDateDebut(dto.getDateDebut());
         session.setDateFin(dto.getDateFin());
         session.setType(dto.getType());

@@ -10,17 +10,20 @@ import java.util.List;
 @Service
 public class EnseignantService {
 
+    private final EnseignantRepository enseignantRepository;
+
     @Autowired
-    private static EnseignantRepository enseignantRepository;
+    public EnseignantService(EnseignantRepository enseignantRepository) {
+        this.enseignantRepository = enseignantRepository;
+    }
 
     public List<Enseignant> getAllEnseignants() {
         return enseignantRepository.findAll();
     }
 
-    public static Enseignant getEnseignantById(Long id) {
+    public Enseignant getEnseignantById(Long id) {
         return enseignantRepository.findById(id).orElse(null);
     }
-
     public Enseignant createEnseignant(Enseignant enseignant) {
         return enseignantRepository.save(enseignant);
     }
