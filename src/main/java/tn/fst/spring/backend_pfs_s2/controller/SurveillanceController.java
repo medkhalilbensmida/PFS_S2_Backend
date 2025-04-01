@@ -260,4 +260,18 @@ public class SurveillanceController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    // NEW descriptive method to get surveillances by session ID
+    @GetMapping("/session/{sessionId}")
+    @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"}) // Added explicit security annotation
+    public ResponseEntity<List<SurveillanceDTO>> getSurveillancesForSession(@PathVariable Long sessionId) {
+        try {
+            List<Surveillance> surveillances = surveillanceService.getSurveillancesBySessionId(sessionId);
+            return ResponseEntity.ok(surveillances.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

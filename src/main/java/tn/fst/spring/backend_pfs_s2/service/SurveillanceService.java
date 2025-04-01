@@ -308,4 +308,16 @@ public class SurveillanceService {
                         (s.getEnseignantSecondaire() != null && s.getEnseignantSecondaire().getId().equals(enseignantId)))
                 .collect(Collectors.toList());
     }
+
+    // Method to get surveillances by session ID (Added to fix compilation error)
+    public List<Surveillance> getSurveillancesBySessionId(Long sessionId) {
+        if (sessionId == null) {
+            // Or handle as appropriate, maybe return empty list or throw exception
+            throw new IllegalArgumentException("Session ID cannot be null"); 
+        }
+        // Assuming SurveillanceRepository has this method
+        // If not, you'll need to add 'List<Surveillance> findBySessionExamenId(Long sessionId);' 
+        // to the SurveillanceRepository interface.
+        return surveillanceRepository.findBySessionExamenId(sessionId); 
+    }
 }
