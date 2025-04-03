@@ -85,37 +85,23 @@ public class SurveillanceController {
     @PostMapping
     @Secured("ROLE_ADMIN")
     public ResponseEntity<SurveillanceDTO> createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
-        try {
-            Surveillance surveillanceToCreate = convertToEntity(surveillanceDTO);
-            // Ne pas définir les enseignants ici, utiliser /assign
-            surveillanceToCreate.setEnseignantPrincipal(null);
-            surveillanceToCreate.setEnseignantSecondaire(null);
+        Surveillance surveillanceToCreate = convertToEntity(surveillanceDTO);
+        // Ne pas définir les enseignants ici, utiliser /assign
+        surveillanceToCreate.setEnseignantPrincipal(null);
+        surveillanceToCreate.setEnseignantSecondaire(null);
 
-            Surveillance created = surveillanceService.createSurveillance(surveillanceToCreate);
-            return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(created));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().body(null); // Ou un message d'erreur plus spécifique
-        } catch (Exception e) {
-            // Log l'erreur e
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Surveillance created = surveillanceService.createSurveillance(surveillanceToCreate);
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(created));
     }
 
     @PutMapping("/{id}")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<SurveillanceDTO> updateSurveillance(@PathVariable Long id, @RequestBody SurveillanceDTO surveillanceDTO) {
-        try {
-            Surveillance surveillanceDetails = convertToEntity(surveillanceDTO);
-            // L'affectation des enseignants se fait via /assign
-            // Les IDs enseignants dans le DTO pour cette route seront ignorés par le service update
-            Surveillance updated = surveillanceService.updateSurveillance(id, surveillanceDetails);
-            return ResponseEntity.ok(convertToDTO(updated));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            // Log l'erreur e
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Surveillance surveillanceDetails = convertToEntity(surveillanceDTO);
+        // L'affectation des enseignants se fait via /assign
+        // Les IDs enseignants dans le DTO pour cette route seront ignorés par le service update
+        Surveillance updated = surveillanceService.updateSurveillance(id, surveillanceDetails);
+        return ResponseEntity.ok(convertToDTO(updated));
     }
 
     // NOUVEAU ENDPOINT POUR L'AFFECTATION

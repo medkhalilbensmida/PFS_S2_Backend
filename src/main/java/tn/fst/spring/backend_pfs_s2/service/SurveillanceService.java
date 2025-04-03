@@ -70,6 +70,16 @@ public class SurveillanceService {
     public Surveillance createSurveillance(Surveillance surveillance) {
         // Valider les entités liées avant de sauvegarder
         validateForeignKeyEntities(surveillance);
+        
+        // Check for overlapping surveillances in the same salle
+        if (surveillance.getSalle() != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                surveillance.getSalle().getId(),
+                surveillance.getDateDebut(),
+                surveillance.getDateFin(),
+                null)) { // null for excludeSurveillanceId since this is a new surveillance
+            throw new IllegalStateException("Il existe déjà une surveillance dans cette salle pendant cette période.");
+        }
+        
         // Assurer que les enseignants ne sont pas définis à la création
         surveillance.setEnseignantPrincipal(null);
         surveillance.setEnseignantSecondaire(null);
@@ -96,6 +106,15 @@ public class SurveillanceService {
     public Surveillance updateSurveillance(Long id, Surveillance surveillanceDetails) {
         Surveillance surveillance = surveillanceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Surveillance non trouvée avec l'ID : " + id));
+
+        // Check for overlapping surveillances in the same salle
+        if (surveillanceDetails.getSalle() != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                surveillanceDetails.getSalle().getId(),
+                surveillanceDetails.getDateDebut(),
+                surveillanceDetails.getDateFin(),
+                id)) { // Pass the current surveillance ID to exclude it from the check
+            throw new IllegalStateException("Il existe déjà une surveillance dans cette salle pendant cette période.");
+        }
 
         // Mettre à jour les champs simples
         surveillance.setDateDebut(surveillanceDetails.getDateDebut());
