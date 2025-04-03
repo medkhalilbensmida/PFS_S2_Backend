@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface SurveillanceRepository extends JpaRepository<Surveillance, Long> {
 
-    // Existing methods
+    List<Surveillance> findAll();
     List<Surveillance> findByDateDebutAndDateFin(Date dateDebut, Date dateFin);
     boolean existsByDateDebutAndDateFin(Date dateDebut, Date dateFin);
 
@@ -25,13 +25,11 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
             @Param("enseignantId") Long enseignantId,
             @Param("dateDebut") Date dateDebut,
             @Param("dateFin") Date dateFin,
-            @Param("excludeSurveillanceId") Long excludeSurveillanceId
-    );
+            @Param("excludeSurveillanceId") Long excludeSurveillanceId);
 
     @Query("SELECT COUNT(s) > 0 FROM Surveillance s WHERE s.sessionExamen.id = :sessionId")
     boolean existsBySessionExamenId(@Param("sessionId") Long sessionId);
 
-    // New methods for better session-surveillance management
     List<Surveillance> findBySessionExamenId(Long sessionId);
 
     @Query("SELECT COUNT(s) > 0 FROM Surveillance s " +
@@ -66,4 +64,11 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
             @Param("dateDebut") Date dateDebut,
             @Param("dateFin") Date dateFin,
             @Param("excludeSurveillanceId") Long excludeSurveillanceId);
+
+    @Query("SELECT s FROM Surveillance s WHERE " +
+            "(s.enseignantPrincipal.id = :enseignantId OR s.enseignantSecondaire.id = :enseignantId) " +
+            "AND NOT EXISTS (SELECT d FROM DisponibiliteEnseignant d WHERE d.enseignant.id = :enseignantId)")
+    List<Surveillance> findSurveillancesWithoutDisponibiliteForEnseignant(@Param("enseignantId") Long enseignantId);
+
+
 }

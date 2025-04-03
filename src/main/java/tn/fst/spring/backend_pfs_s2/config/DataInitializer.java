@@ -75,7 +75,7 @@ public class DataInitializer implements CommandLineRunner {
                     DisponibiliteEnseignant disponibilite = new DisponibiliteEnseignant();
                     disponibilite.setEnseignant(enseignant);
                     disponibilite.setSurveillance(surveillance);
-                    disponibilite.setEstDisponible(true); // Initialement non disponible
+                    disponibilite.setEstDisponible(false); // Initialement non disponible
                     disponibiliteRepository.save(disponibilite);
                 }
             }
