@@ -77,7 +77,7 @@ public class SurveillanceService {
                 surveillance.getDateDebut(),
                 surveillance.getDateFin(),
                 null)) { // null for excludeSurveillanceId since this is a new surveillance
-            throw new IllegalStateException("Il existe déjà une surveillance dans cette salle pendant cette période.");
+            throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
         }
         
         // Assurer que les enseignants ne sont pas définis à la création
@@ -113,7 +113,7 @@ public class SurveillanceService {
                 surveillanceDetails.getDateDebut(),
                 surveillanceDetails.getDateFin(),
                 id)) { // Pass the current surveillance ID to exclude it from the check
-            throw new IllegalStateException("Il existe déjà une surveillance dans cette salle pendant cette période.");
+            throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
         }
 
         // Mettre à jour les champs simples
