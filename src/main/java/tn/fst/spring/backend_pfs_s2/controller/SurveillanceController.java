@@ -173,9 +173,11 @@ public class SurveillanceController {
         dto.setStatut(surveillance.getStatut());
         if (surveillance.getSalle() != null) {
             dto.setSalleId(surveillance.getSalle().getId());
+            dto.setSalleName(surveillance.getSalle().getNumero());
         }
         if (surveillance.getMatiere() != null) {
             dto.setMatiereId(surveillance.getMatiere().getId());
+            dto.setMatiereName(surveillance.getMatiere().getNom());
         }
         if (surveillance.getEnseignantPrincipal() != null) {
             dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal().getId());

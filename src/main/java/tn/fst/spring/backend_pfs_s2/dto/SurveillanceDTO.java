@@ -16,4 +16,6 @@ public class SurveillanceDTO {
     private Long enseignantPrincipalId; // Peut être null
     private Long enseignantSecondaireId; // Peut être null
     private Long sessionExamenId; // Peut être null
+    private String salleName; // Nom de la salle
+    private String matiereName; // Nom de la matière
 }
