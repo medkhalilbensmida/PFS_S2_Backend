@@ -21,11 +21,10 @@ public abstract class Utilisateur implements UserDetails {
     private String email;
     private String motDePasse;
     private String telephone;
+    private String photoProfil;
 
-    // Constructeur par défaut
     public Utilisateur() {}
 
-    // Constructeur avec paramètres
     public Utilisateur(String nom, String prenom, String email, String motDePasse, String telephone) {
         this.nom = nom;
         this.prenom = prenom;
