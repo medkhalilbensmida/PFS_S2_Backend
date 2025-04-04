@@ -9,11 +9,10 @@ import lombok.EqualsAndHashCode;
 @Entity
 public class Administrateur extends Utilisateur {
     private String fonction;
+    private String signature;
 
-    // Constructeur par défaut
     public Administrateur() {}
 
-    // Constructeur avec paramètres
     public Administrateur(String nom, String prenom, String email, String motDePasse, String telephone, String fonction) {
         super(nom, prenom, email, motDePasse, telephone);
         this.fonction = fonction;

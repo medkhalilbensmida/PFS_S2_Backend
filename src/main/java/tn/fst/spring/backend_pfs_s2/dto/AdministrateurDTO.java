@@ -11,4 +11,6 @@ public class AdministrateurDTO {
     private String telephone;
     private String fonction;
     private String motDePasse;
+    private String photoProfil;
+    private String signature;
 }

@@ -12,8 +12,6 @@ import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository;
 import tn.fst.spring.backend_pfs_s2.service.EnseignantService;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,8 +21,8 @@ import java.util.stream.Collectors;
 public class EnseignantController {
 
     private final EnseignantService enseignantService;
-    private final EnseignantRepository enseignantRepository; // Ajoutez cette ligne
-    private final PasswordEncoder passwordEncoder; // Et celle-ci
+    private final EnseignantRepository enseignantRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public EnseignantController(EnseignantService enseignantService,
                                 EnseignantRepository enseignantRepository,
@@ -33,6 +31,7 @@ public class EnseignantController {
         this.enseignantRepository = enseignantRepository;
         this.passwordEncoder = passwordEncoder;
     }
+
     @GetMapping
     public List<EnseignantDTO> getAllEnseignants() {
         return enseignantService.getAllEnseignants().stream()
@@ -45,15 +44,12 @@ public class EnseignantController {
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request,
                                             Authentication authentication) {
         try {
-            // Vérification de l'authentification
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ErrorResponse("AUTH_REQUIRED", "Authentification requise"));
             }
 
             String email = authentication.getName();
-
-            // Vérification des autorisations
             boolean isAuthorized = authentication.getAuthorities().stream()
                     .anyMatch(grantedAuthority ->
                             grantedAuthority.getAuthority().equals("ROLE_ENSEIGNANT") ||
@@ -64,23 +60,19 @@ public class EnseignantController {
                         .body(new ErrorResponse("ACCESS_DENIED", "Vous n'avez pas les droits nécessaires"));
             }
 
-            // Recherche de l'utilisateur
             Enseignant enseignant = enseignantRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            // Vérification du mot de passe actuel
             if (!passwordEncoder.matches(request.getCurrentPassword(), enseignant.getMotDePasse())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorResponse("PASSWORD_MISMATCH", "Le mot de passe actuel est incorrect"));
             }
 
-            // Validation du nouveau mot de passe
             if (request.getNewPassword() == null || request.getNewPassword().trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ErrorResponse("INVALID_PASSWORD", "Le nouveau mot de passe ne peut pas être vide"));
             }
 
-            // Mise à jour du mot de passe
             enseignant.setMotDePasse(passwordEncoder.encode(request.getNewPassword()));
             enseignantRepository.save(enseignant);
 
@@ -95,7 +87,6 @@ public class EnseignantController {
     @GetMapping("/{id}")
     @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
     public EnseignantDTO getEnseignantById(@PathVariable Long id) {
-        // Vérifiez que l'utilisateur a le droit d'accéder à ce profil
         return convertToDTO(enseignantService.getEnseignantById(id));
     }
 
@@ -110,18 +101,16 @@ public class EnseignantController {
     @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
     public EnseignantDTO updateEnseignant(@PathVariable Long id,
                                           @RequestBody EnseignantDTO enseignantDTO) {
-        // Récupérer l'enseignant existant
         Enseignant existing = enseignantService.getEnseignantById(id);
 
-        // Mettre à jour les champs
         existing.setNom(enseignantDTO.getNom());
         existing.setPrenom(enseignantDTO.getPrenom());
         existing.setEmail(enseignantDTO.getEmail());
         existing.setTelephone(enseignantDTO.getTelephone());
         existing.setGrade(enseignantDTO.getGrade());
         existing.setDepartement(enseignantDTO.getDepartement());
+        existing.setPhotoProfil(enseignantDTO.getPhotoProfil());
 
-        // Mettre à jour le mot de passe seulement si fourni
         if (enseignantDTO.getMotDePasse() != null && !enseignantDTO.getMotDePasse().isEmpty()) {
             existing.setMotDePasse(passwordEncoder.encode(enseignantDTO.getMotDePasse()));
         }
@@ -145,6 +134,7 @@ public class EnseignantController {
         dto.setTelephone(enseignant.getTelephone());
         dto.setGrade(enseignant.getGrade());
         dto.setDepartement(enseignant.getDepartement());
+        dto.setPhotoProfil(enseignant.getPhotoProfil());
         return dto;
     }
 
@@ -157,6 +147,7 @@ public class EnseignantController {
         enseignant.setTelephone(dto.getTelephone());
         enseignant.setGrade(dto.getGrade());
         enseignant.setDepartement(dto.getDepartement());
+        enseignant.setPhotoProfil(dto.getPhotoProfil());
         return enseignant;
     }
 }
