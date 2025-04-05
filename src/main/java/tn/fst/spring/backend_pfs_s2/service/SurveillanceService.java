@@ -72,12 +72,20 @@ public class SurveillanceService {
         validateForeignKeyEntities(surveillance);
         
         // Check for overlapping surveillances in the same salle
-        if (surveillance.getSalle() != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
-                surveillance.getSalle().getId(),
-                surveillance.getDateDebut(),
-                surveillance.getDateFin(),
-                null)) { // null for excludeSurveillanceId since this is a new surveillance
-            throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+        if (surveillance.getSalle() != null) {
+            Long salleId = surveillance.getSalle().getId();
+            
+            if (salleId != null) {
+                boolean overlapping = surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                        salleId,
+                        surveillance.getDateDebut(),
+                        surveillance.getDateFin(),
+                        null); // null for excludeSurveillanceId since this is a new surveillance
+                
+                if (overlapping) {
+                    throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+                }
+            }
         }
         
         // Assurer que les enseignants ne sont pas définis à la création
@@ -108,12 +116,15 @@ public class SurveillanceService {
                 .orElseThrow(() -> new EntityNotFoundException("Surveillance non trouvée avec l'ID : " + id));
 
         // Check for overlapping surveillances in the same salle
-        if (surveillanceDetails.getSalle() != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
-                surveillanceDetails.getSalle().getId(),
-                surveillanceDetails.getDateDebut(),
-                surveillanceDetails.getDateFin(),
-                id)) { // Pass the current surveillance ID to exclude it from the check
-            throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+        if (surveillanceDetails.getSalle() != null) {
+            Long salleId = surveillanceDetails.getSalle().getId();
+            if (salleId != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                    salleId,
+                    surveillanceDetails.getDateDebut(),
+                    surveillanceDetails.getDateFin(),
+                    id)) { // Pass the current surveillance ID to exclude it from the check
+                throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+            }
         }
 
         // Mettre à jour les champs simples

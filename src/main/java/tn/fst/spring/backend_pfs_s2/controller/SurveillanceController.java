@@ -84,14 +84,27 @@ public class SurveillanceController {
 
     @PostMapping
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<SurveillanceDTO> createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
-        Surveillance surveillanceToCreate = convertToEntity(surveillanceDTO);
-        // Ne pas définir les enseignants ici, utiliser /assign
-        surveillanceToCreate.setEnseignantPrincipal(null);
-        surveillanceToCreate.setEnseignantSecondaire(null);
+    public ResponseEntity<?> createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
+        try {
+            Surveillance surveillanceToCreate = convertToEntity(surveillanceDTO);
+            // Ne pas définir les enseignants ici, utiliser /assign
+            surveillanceToCreate.setEnseignantPrincipal(null);
+            surveillanceToCreate.setEnseignantSecondaire(null);
 
-        Surveillance created = surveillanceService.createSurveillance(surveillanceToCreate);
-        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(created));
+            Surveillance created = surveillanceService.createSurveillance(surveillanceToCreate);
+            return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(created));
+        } catch (IllegalStateException e) {
+            // Erreur métier (ex: Surveillance qui se chevauche dans la même salle)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace(); // Log the error for debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_SERVER_ERROR", "Une erreur interne est survenue lors de la création."));
+        }
     }
 
     @PutMapping("/{id}")
@@ -260,6 +273,25 @@ public class SurveillanceController {
                     .collect(Collectors.toList()));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Simple error response class for direct use in the controller
+    private static class ErrorResponse {
+        private String code;
+        private String message;
+
+        public ErrorResponse(String code, String message) {
+            this.code = code;
+            this.message = message;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public String getMessage() {
+            return message;
         }
     }
 }
