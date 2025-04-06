@@ -57,8 +57,8 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
 
     @Query("SELECT COUNT(s) > 0 FROM Surveillance s WHERE " +
             "s.salle.id = :salleId " +
-            "AND s.id <> :excludeSurveillanceId " +
-            "AND (s.dateDebut < :dateFin AND s.dateFin > :dateDebut)")
+            "AND (:excludeSurveillanceId IS NULL OR s.id <> :excludeSurveillanceId) " +
+            "AND NOT (s.dateFin <= :dateDebut OR s.dateDebut >= :dateFin)")
     boolean existsOverlappingSurveillanceForSalle(
             @Param("salleId") Long salleId,
             @Param("dateDebut") Date dateDebut,
