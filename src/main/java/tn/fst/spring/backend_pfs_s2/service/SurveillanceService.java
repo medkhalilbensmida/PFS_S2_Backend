@@ -20,6 +20,7 @@ import java.io.OutputStream;
 
 import tn.fst.spring.backend_pfs_s2.service.export.CsvExportService;
 import tn.fst.spring.backend_pfs_s2.service.export.ExcelExportService;
+import tn.fst.spring.backend_pfs_s2.service.export.SurveillanceFilterDTO;
 
 import java.util.Optional; // Importation ajoutée (si Optional est utilisé)
 
@@ -70,24 +71,24 @@ public class SurveillanceService {
     public Surveillance createSurveillance(Surveillance surveillance) {
         // Valider les entités liées avant de sauvegarder
         validateForeignKeyEntities(surveillance);
-        
+
         // Check for overlapping surveillances in the same salle
         if (surveillance.getSalle() != null) {
             Long salleId = surveillance.getSalle().getId();
-            
+
             if (salleId != null) {
                 boolean overlapping = surveillanceRepository.existsOverlappingSurveillanceForSalle(
                         salleId,
                         surveillance.getDateDebut(),
                         surveillance.getDateFin(),
                         null); // null for excludeSurveillanceId since this is a new surveillance
-                
+
                 if (overlapping) {
                     throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
                 }
             }
         }
-        
+
         // Assurer que les enseignants ne sont pas définis à la création
         surveillance.setEnseignantPrincipal(null);
         surveillance.setEnseignantSecondaire(null);
@@ -300,15 +301,6 @@ public class SurveillanceService {
         return disponibiliteRepository.save(disponibilite);
     }
 
-    public void exportToCsv(OutputStream outputStream) throws IOException {
-        List<Surveillance> surveillances = getAvailableSurveillances();
-        csvExportService.export(surveillances, outputStream);
-    }
-
-    public void exportToExcel(OutputStream outputStream) throws IOException {
-        List<Surveillance> surveillances = getAvailableSurveillances();
-        excelExportService.export(surveillances, outputStream);
-    }
 
     // Add this method to SurveillanceService class
     public List<Surveillance> getAvailableSurveillances() {
@@ -339,15 +331,58 @@ public class SurveillanceService {
                 .collect(Collectors.toList());
     }
 
+    public List<Surveillance> filterSurveillances(SurveillanceFilterDTO filterDTO) {
+        return surveillanceRepository.findAll().stream()
+                .filter(surveillance -> {
+                    boolean matches = true;
+
+                    if (filterDTO.getAnneeUniversitaire() != null && !filterDTO.getAnneeUniversitaire().isEmpty()) {
+                        String[] years = filterDTO.getAnneeUniversitaire().split("-");
+                        if (years.length == 2) {
+                            int startYear = Integer.parseInt(years[0]);
+                            int endYear = Integer.parseInt(years[1]);
+
+                            // Get the year from surveillance's session
+                            int surveillanceYear = surveillance.getSessionExamen().getAnnee().getDateDebut().getYear() + 1900;
+                            matches = matches && (surveillanceYear == startYear);
+                        }
+                    }
+
+                    if (filterDTO.getSemestre() != null) {
+                        matches = matches && surveillance.getSessionExamen().getNumSemestre()
+                                .equals(filterDTO.getSemestre());
+                    }
+
+                    if (filterDTO.getTypeSession() != null) {
+                        matches = matches && surveillance.getSessionExamen().getType()
+                                .equals(filterDTO.getTypeSession());
+                    }
+
+                    return matches;
+                })
+                .collect(Collectors.toList());
+    }
+    // Modify existing export methods
+    public void exportToCsv(OutputStream outputStream, SurveillanceFilterDTO filterDTO) throws IOException {
+        List<Surveillance> surveillances = filterSurveillances(filterDTO);
+        csvExportService.export(surveillances, outputStream);
+    }
+
+    public void exportToExcel(OutputStream outputStream, SurveillanceFilterDTO filterDTO) throws IOException {
+        List<Surveillance> surveillances = filterSurveillances(filterDTO);
+        excelExportService.export(surveillances, outputStream);
+    }
+
+
     // Method to get surveillances by session ID (Added to fix compilation error)
     public List<Surveillance> getSurveillancesBySessionId(Long sessionId) {
         if (sessionId == null) {
             // Or handle as appropriate, maybe return empty list or throw exception
-            throw new IllegalArgumentException("Session ID cannot be null"); 
+            throw new IllegalArgumentException("Session ID cannot be null");
         }
         // Assuming SurveillanceRepository has this method
-        // If not, you'll need to add 'List<Surveillance> findBySessionExamenId(Long sessionId);' 
+        // If not, you'll need to add 'List<Surveillance> findBySessionExamenId(Long sessionId);'
         // to the SurveillanceRepository interface.
-        return surveillanceRepository.findBySessionExamenId(sessionId); 
+        return surveillanceRepository.findBySessionExamenId(sessionId);
     }
 }
