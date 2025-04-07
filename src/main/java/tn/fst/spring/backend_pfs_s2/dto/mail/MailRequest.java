@@ -1,4 +1,4 @@
-package tn.fst.spring.backend_pfs_s2.dto;
+package tn.fst.spring.backend_pfs_s2.dto.mail;
 
 
 import com.fasterxml.jackson.annotation.JsonAlias;

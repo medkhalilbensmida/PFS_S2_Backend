@@ -1,4 +1,3 @@
-
 package tn.fst.spring.backend_pfs_s2.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,12 +26,12 @@ public class Enseignant extends Utilisateur {
     @OneToMany(mappedBy = "enseignantSecondaire")
     @JsonIgnore
     private List<Surveillance> surveillancesSecondaires;
+
     @OneToMany(mappedBy = "enseignant")
     private List<Enseigne> enseignes;
 
     public Enseignant() {}
 
-    // Constructeur complet
     public Enseignant(String nom, String prenom, String email, String motDePasse,
                       String telephone, String grade, String departement) {
         super(nom, prenom, email, motDePasse, telephone);

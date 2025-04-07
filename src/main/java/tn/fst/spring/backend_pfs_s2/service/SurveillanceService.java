@@ -71,6 +71,24 @@ public class SurveillanceService {
     public Surveillance createSurveillance(Surveillance surveillance) {
         // Valider les entités liées avant de sauvegarder
         validateForeignKeyEntities(surveillance);
+
+        // Check for overlapping surveillances in the same salle
+        if (surveillance.getSalle() != null) {
+            Long salleId = surveillance.getSalle().getId();
+
+            if (salleId != null) {
+                boolean overlapping = surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                        salleId,
+                        surveillance.getDateDebut(),
+                        surveillance.getDateFin(),
+                        null); // null for excludeSurveillanceId since this is a new surveillance
+
+                if (overlapping) {
+                    throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+                }
+            }
+        }
+
         // Assurer que les enseignants ne sont pas définis à la création
         surveillance.setEnseignantPrincipal(null);
         surveillance.setEnseignantSecondaire(null);
@@ -97,6 +115,18 @@ public class SurveillanceService {
     public Surveillance updateSurveillance(Long id, Surveillance surveillanceDetails) {
         Surveillance surveillance = surveillanceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Surveillance non trouvée avec l'ID : " + id));
+
+        // Check for overlapping surveillances in the same salle
+        if (surveillanceDetails.getSalle() != null) {
+            Long salleId = surveillanceDetails.getSalle().getId();
+            if (salleId != null && surveillanceRepository.existsOverlappingSurveillanceForSalle(
+                    salleId,
+                    surveillanceDetails.getDateDebut(),
+                    surveillanceDetails.getDateFin(),
+                    id)) { // Pass the current surveillance ID to exclude it from the check
+                throw new IllegalStateException("Il existe deja une surveillance dans cette salle pendant cette periode.");
+            }
+        }
 
         // Mettre à jour les champs simples
         surveillance.setDateDebut(surveillanceDetails.getDateDebut());
@@ -271,16 +301,7 @@ public class SurveillanceService {
         return disponibiliteRepository.save(disponibilite);
     }
 
-    /*public void exportToCsv(OutputStream outputStream) throws IOException {
-        List<Surveillance> surveillances = getAvailableSurveillances();
-        csvExportService.export(surveillances, outputStream);
-    }
 
-    public void exportToExcel(OutputStream outputStream) throws IOException {
-        List<Surveillance> surveillances = getAvailableSurveillances();
-        excelExportService.export(surveillances, outputStream);
-    }
-*/
     // Add this method to SurveillanceService class
     public List<Surveillance> getAvailableSurveillances() {
         return surveillanceRepository.findAll().stream()
@@ -352,4 +373,16 @@ public class SurveillanceService {
         excelExportService.export(surveillances, outputStream);
     }
 
+
+    // Method to get surveillances by session ID (Added to fix compilation error)
+    public List<Surveillance> getSurveillancesBySessionId(Long sessionId) {
+        if (sessionId == null) {
+            // Or handle as appropriate, maybe return empty list or throw exception
+            throw new IllegalArgumentException("Session ID cannot be null");
+        }
+        // Assuming SurveillanceRepository has this method
+        // If not, you'll need to add 'List<Surveillance> findBySessionExamenId(Long sessionId);'
+        // to the SurveillanceRepository interface.
+        return surveillanceRepository.findBySessionExamenId(sessionId);
+    }
 }

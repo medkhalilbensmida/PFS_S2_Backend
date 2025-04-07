@@ -1,6 +1,5 @@
 package tn.fst.spring.backend_pfs_s2.dto;
 
-
 import lombok.Data;
 
 @Data
@@ -12,4 +11,6 @@ public class EnseignantDTO {
     private String telephone;
     private String grade;
     private String departement;
+    private String motDePasse;
+    private String photoProfil;
 }

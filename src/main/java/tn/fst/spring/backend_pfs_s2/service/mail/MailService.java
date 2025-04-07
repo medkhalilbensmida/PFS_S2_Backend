@@ -1,10 +1,9 @@
-package tn.fst.spring.backend_pfs_s2.service;
+package tn.fst.spring.backend_pfs_s2.service.mail;
 
 import java.util.Map;
 
 import java.util.HashMap;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import tn.fst.spring.backend_pfs_s2.dto.MailRequest;
+import tn.fst.spring.backend_pfs_s2.dto.mail.MailRequest;
 /**
  * Service for sending emails using a template engine.
  * This service utilizes JavaMailSender for sending emails and SpringTemplateEngine

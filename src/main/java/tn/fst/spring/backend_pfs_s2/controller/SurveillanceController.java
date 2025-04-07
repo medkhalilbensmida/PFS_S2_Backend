@@ -81,7 +81,7 @@ public class SurveillanceController {
 
     @PostMapping
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<SurveillanceDTO> createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
+    public ResponseEntity<?> createSurveillance(@RequestBody SurveillanceDTO surveillanceDTO) {
         try {
             Surveillance surveillanceToCreate = convertToEntity(surveillanceDTO);
             // Ne pas définir les enseignants ici, utiliser /assign
@@ -90,29 +90,28 @@ public class SurveillanceController {
 
             Surveillance created = surveillanceService.createSurveillance(surveillanceToCreate);
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(created));
+        } catch (IllegalStateException e) {
+            // Erreur métier (ex: Surveillance qui se chevauche dans la même salle)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("CONFLICT", e.getMessage()));
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().body(null); // Ou un message d'erreur plus spécifique
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
         } catch (Exception e) {
-            // Log l'erreur e
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            e.printStackTrace(); // Log the error for debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("INTERNAL_SERVER_ERROR", "Une erreur interne est survenue lors de la création."));
         }
     }
 
     @PutMapping("/{id}")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<SurveillanceDTO> updateSurveillance(@PathVariable Long id, @RequestBody SurveillanceDTO surveillanceDTO) {
-        try {
-            Surveillance surveillanceDetails = convertToEntity(surveillanceDTO);
-            // L'affectation des enseignants se fait via /assign
-            // Les IDs enseignants dans le DTO pour cette route seront ignorés par le service update
-            Surveillance updated = surveillanceService.updateSurveillance(id, surveillanceDetails);
-            return ResponseEntity.ok(convertToDTO(updated));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            // Log l'erreur e
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Surveillance surveillanceDetails = convertToEntity(surveillanceDTO);
+        // L'affectation des enseignants se fait via /assign
+        // Les IDs enseignants dans le DTO pour cette route seront ignorés par le service update
+        Surveillance updated = surveillanceService.updateSurveillance(id, surveillanceDetails);
+        return ResponseEntity.ok(convertToDTO(updated));
     }
 
     // NOUVEAU ENDPOINT POUR L'AFFECTATION
@@ -170,9 +169,11 @@ public class SurveillanceController {
         dto.setStatut(surveillance.getStatut());
         if (surveillance.getSalle() != null) {
             dto.setSalleId(surveillance.getSalle().getId());
+            dto.setSalleName(surveillance.getSalle().getNumero());
         }
         if (surveillance.getMatiere() != null) {
             dto.setMatiereId(surveillance.getMatiere().getId());
+            dto.setMatiereName(surveillance.getMatiere().getNom());
         }
         if (surveillance.getEnseignantPrincipal() != null) {
             dto.setEnseignantPrincipalId(surveillance.getEnseignantPrincipal().getId());
@@ -305,5 +306,38 @@ public class SurveillanceController {
                 .ok()
                 .headers(headers)
                 .body(pdfContent);
+    }
+
+    // NEW descriptive method to get surveillances by session ID
+    @GetMapping("/session/{sessionId}")
+    @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"}) // Added explicit security annotation
+    public ResponseEntity<List<SurveillanceDTO>> getSurveillancesForSession(@PathVariable Long sessionId) {
+        try {
+            List<Surveillance> surveillances = surveillanceService.getSurveillancesBySessionId(sessionId);
+            return ResponseEntity.ok(surveillances.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Simple error response class for direct use in the controller
+    private static class ErrorResponse {
+        private String code;
+        private String message;
+
+        public ErrorResponse(String code, String message) {
+            this.code = code;
+            this.message = message;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }
