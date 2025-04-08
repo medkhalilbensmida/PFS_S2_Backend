@@ -3,6 +3,8 @@ package tn.fst.spring.backend_pfs_s2.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.fst.spring.backend_pfs_s2.model.DisponibiliteEnseignant;
+import tn.fst.spring.backend_pfs_s2.model.Enseignant;
+import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 import tn.fst.spring.backend_pfs_s2.repository.DisponibiliteEnseignantRepository;
 
 import java.util.List;
@@ -35,6 +37,25 @@ public class DisponibiliteEnseignantService {
     public DisponibiliteEnseignant updateDisponibilite(Long id, Boolean estDisponible) {
         DisponibiliteEnseignant disponibilite = disponibiliteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Disponibilité introuvable avec l'id: " + id));
+        disponibilite.setEstDisponible(estDisponible);
+        return disponibiliteRepository.save(disponibilite);
+    }
+
+
+    @Transactional
+    public DisponibiliteEnseignant updateDisponibiliteBySurveillance(Long surveillanceId, Long enseignantId, Boolean estDisponible) {
+        // Create Enseignant and Surveillance objects properly
+        Enseignant enseignant = new Enseignant();
+        enseignant.setId(enseignantId);
+        
+        Surveillance surveillance = new Surveillance();
+        surveillance.setId(surveillanceId);
+        
+        // Find the disponibilite with properly initialized objects
+        DisponibiliteEnseignant disponibilite = disponibiliteRepository
+                .findByEnseignantAndSurveillance(enseignant, surveillance)
+                .orElseThrow(() -> new RuntimeException("Disponibilité introuvable pour l'enseignant et la surveillance spécifiés"));
+        
         disponibilite.setEstDisponible(estDisponible);
         return disponibiliteRepository.save(disponibilite);
     }

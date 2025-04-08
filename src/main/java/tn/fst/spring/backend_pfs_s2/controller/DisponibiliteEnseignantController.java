@@ -86,4 +86,26 @@ public class DisponibiliteEnseignantController {
         }
         return dto;
     }
+
+    @PutMapping("/surveillance/{surveillanceId}")
+    @Secured("ROLE_ENSEIGNANT")
+    public ResponseEntity<?> updateDisponibiliteBySurveillance(
+            @PathVariable Long surveillanceId,
+            @RequestParam Boolean estDisponible,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+            Long enseignantId = customUserDetails.getUserId();
+
+            DisponibiliteEnseignant updated = disponibiliteService
+                    .updateDisponibiliteBySurveillance(surveillanceId, enseignantId, estDisponible);
+            return ResponseEntity.ok(convertToDTO(updated));
+        } catch (ClassCastException e) {
+            return ResponseEntity.status(500)
+                    .body("Erreur de conversion des détails utilisateur");
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body("Erreur lors de la mise à jour de la disponibilité: " + e.getMessage());
+        }
+    }
 }
