@@ -7,6 +7,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.AssignementRequestDTO; // Ajoutez cet import
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.model.*; // Assurez-vous que les modèles nécessaires sont importés
 import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository; // Ajoutez si nécessaire pour la conversion
 import tn.fst.spring.backend_pfs_s2.repository.MatiereRepository;     // Ajoutez si nécessaire pour la conversion
@@ -50,6 +51,18 @@ public class SurveillanceController {
         return surveillanceService.getAllSurveillances().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+
+    @GetMapping("/detailed")
+    public List<SurveillanceDetailsDTO> getAllDetailedSurveillances(){
+        return surveillanceService.getAllDetailedSurveillance();
+    }
+
+
+    @GetMapping("/detailed/{id}")
+    public SurveillanceDetailsDTO getDetailedSurveillance(@PathVariable Long id) {
+        return surveillanceService.getDetailedSurveillance(id);
     }
 
     @GetMapping("/{id}")

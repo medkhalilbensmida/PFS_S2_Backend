@@ -3,9 +3,12 @@ package tn.fst.spring.backend_pfs_s2.controller;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDetailsDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.model.Semestre;
 import tn.fst.spring.backend_pfs_s2.model.SessionExamen;
 import tn.fst.spring.backend_pfs_s2.service.SessionExamenService;
+import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,10 +19,14 @@ import java.util.stream.Collectors;
 public class SessionExamenController {
 
     private final SessionExamenService sessionService;
+    private final SurveillanceService surveillanceService;
 
-    public SessionExamenController(SessionExamenService sessionService) {
+    public SessionExamenController(SessionExamenService sessionService,SurveillanceService surveillanceService) {
         this.sessionService = sessionService;
+        this.surveillanceService = surveillanceService;
     }
+
+
 
     @GetMapping
     public List<SessionExamenDTO> getAllSessions() {
@@ -27,6 +34,8 @@ public class SessionExamenController {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+
 
     @GetMapping("/{id}")
     @Secured("ROLE_ADMIN")
@@ -78,4 +87,39 @@ public class SessionExamenController {
         session.setNumSemestre(Semestre.valueOf(dto.getNumSemestre()));
         return session;
     }
+
+    @GetMapping("/detailed/{id}")
+    public SessionExamenDetailsDTO getSessionDetailsByID(@PathVariable Long id){
+        SessionExamen session = sessionService.getSessionWithDetails(id);
+        return convertToDetailedDTO(session);
+    }
+    
+
+    private SessionExamenDetailsDTO convertToDetailedDTO(SessionExamen session) {
+        if (session == null) return null;
+        SessionExamenDetailsDTO dto = new SessionExamenDetailsDTO();
+        dto.setId(session.getId());
+        dto.setDateDebut(session.getDateDebut());
+        dto.setDateFin(session.getDateFin());
+        dto.setType(session.getType().name());
+        dto.setEstActive(session.getEstActive());
+        dto.setNumSemestre(session.getNumSemestre().toString());
+
+        if (session.getAnnee() != null) {
+            dto.setAnneeUniversitaireId(session.getAnnee().getId());
+        }
+
+        if (session.getSurveillances() != null) {
+            dto.setSurveillances(
+                session.getSurveillances().stream().map(surv -> {
+                    SurveillanceDetailsDTO sDto = surveillanceService.getDetailedSurveillanceFromSurveillance(surv);
+                    return sDto;
+                }).toList()
+            );
+        }
+
+        return dto;
+    }
+        
+
 }

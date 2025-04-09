@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Importation ajoutée
 import tn.fst.spring.backend_pfs_s2.model.*;
 import tn.fst.spring.backend_pfs_s2.repository.*;
+import tn.fst.spring.backend_pfs_s2.dto.EnseignantDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO; // Import added for SurveillanceDTO
 
 import java.util.Date; // Importation ajoutée (si Date est utilisé directement)
 import java.util.List;
@@ -41,6 +43,50 @@ public class SurveillanceService {
     public List<Surveillance> getAllSurveillances() {
         return surveillanceRepository.findAll();
     }
+
+
+    @Transactional
+    public SurveillanceDetailsDTO getDetailedSurveillance(Long surveillance_id) {
+        Surveillance surveillance = surveillanceRepository.findById(surveillance_id)
+        .orElseThrow(() -> new EntityNotFoundException("Surveillance non trouvée avec l'ID : " + surveillance_id));
+        return getDetailedSurveillanceFromSurveillance(surveillance);
+    }
+
+    @Transactional
+    public  SurveillanceDetailsDTO getDetailedSurveillanceFromSurveillance (Surveillance surveillance) {
+        SurveillanceDetailsDTO dto = new SurveillanceDetailsDTO();
+        dto.setId(surveillance.getId()); 
+        dto.setDateDebut(surveillance.getDateDebut());
+        dto.setDateFin(surveillance.getDateFin());
+        dto.setStatut(surveillance.getStatut());
+        
+        if (surveillance.getEnseignantPrincipal() != null) {
+            EnseignantDTO principalDTO = convertToEnseignantDTO(surveillance.getEnseignantPrincipal());
+            dto.setEnseignantPrincipal(principalDTO);
+        }
+        
+        if (surveillance.getEnseignantSecondaire() != null) {
+            EnseignantDTO secondaireDTO = convertToEnseignantDTO(surveillance.getEnseignantSecondaire());
+            dto.setEnseignantSecondaire(secondaireDTO);
+        }
+        
+        return dto;
+    }
+
+
+
+    @Transactional
+    public List<SurveillanceDetailsDTO> getAllDetailedSurveillance() {
+        List<Surveillance> listSurveillance = surveillanceRepository.findAll();
+        return listSurveillance.stream()
+                .map(surveillance -> {
+                    return getDetailedSurveillanceFromSurveillance(surveillance);
+                })
+                .toList();
+    }
+
+
+    
 
     public Surveillance getSurveillanceById(Long id) {
         return surveillanceRepository.findById(id)
@@ -249,4 +295,17 @@ public class SurveillanceService {
         disponibilite.setEstDisponible(estDisponible);
         return disponibiliteRepository.save(disponibilite);
     }
+
+    private EnseignantDTO convertToEnseignantDTO(Enseignant enseignant) {
+        EnseignantDTO dto = new EnseignantDTO();
+        dto.setId(enseignant.getId());
+        dto.setNom(enseignant.getNom());
+        dto.setPrenom(enseignant.getPrenom());
+        dto.setEmail(enseignant.getEmail());
+        dto.setTelephone(enseignant.getTelephone());
+        dto.setGrade(enseignant.getGrade());
+        dto.setDepartement(enseignant.getDepartement());
+        return dto;
+    }
+
 }

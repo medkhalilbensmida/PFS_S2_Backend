@@ -36,4 +36,15 @@ public class SessionExamenService {
     public void deleteSession(Long id) {
         sessionExamenRepository.deleteById(id);
     }
+
+    public void getSessionDetails(Long id){
+
+    }
+public SessionExamen getSessionWithDetails(Long id) {
+    SessionExamen sessionExamen = sessionExamenRepository.findById(id).orElse(null);
+    if (sessionExamen != null) {
+        sessionExamen.getSurveillances().size();
+    }
+    return sessionExamen;
+}
 }
