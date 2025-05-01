@@ -1,5 +1,5 @@
 package tn.fst.spring.backend_pfs_s2.exception;
-
+/*
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,4 +53,4 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return message;
         }
     }
-} 
+} */

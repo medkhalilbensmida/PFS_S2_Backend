@@ -9,17 +9,27 @@ import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import tn.fst.spring.backend_pfs_s2.model.*;
 import tn.fst.spring.backend_pfs_s2.repository.*;
 import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import com.itextpdf.layout.borders.Border;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.layout.properties.HorizontalAlignment;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 public class ConvocationService {
@@ -32,15 +42,17 @@ public class ConvocationService {
     @Autowired
     private SessionExamenRepository sessionExamenRepository;
 
+    @Autowired
+    private AdministrateurRepository administrateurRepository;
+
     private void addHeader(Document document, SurveillanceFilterDTO filterDTO) {
         Table headerTable = new Table(UnitValue.createPercentArray(new float[]{50, 50}));
         headerTable.setWidth(UnitValue.createPercentValue(100));
-        headerTable.setMinHeight(60); // Add minimum height to ensure vertical space
+        headerTable.setMinHeight(60);
 
-        // Left cell
         Cell leftCell = new Cell();
         leftCell.setBorder(Border.NO_BORDER);
-        leftCell.setVerticalAlignment(VerticalAlignment.MIDDLE); // Add vertical alignment
+        leftCell.setVerticalAlignment(VerticalAlignment.MIDDLE);
 
         Paragraph leftParagraph = new Paragraph();
         leftParagraph.add(new Text("Université Tunis El Manar").setBold())
@@ -51,10 +63,9 @@ public class ConvocationService {
 
         leftCell.add(leftParagraph);
 
-        // Right cell
         Cell rightCell = new Cell();
         rightCell.setBorder(Border.NO_BORDER);
-        rightCell.setVerticalAlignment(VerticalAlignment.MIDDLE); // Add vertical alignment
+        rightCell.setVerticalAlignment(VerticalAlignment.MIDDLE);
 
         String yearText = "Année Universitaire: " +
                 (filterDTO.getAnneeUniversitaire() != null ?
@@ -66,19 +77,17 @@ public class ConvocationService {
 
         rightCell.add(rightParagraph);
 
-        // Add cells to table
         headerTable.addCell(leftCell);
         headerTable.addCell(rightCell);
 
         document.add(headerTable);
         document.add(new Paragraph("\n"));
     }
+
     private void addTitle(Document document, SurveillanceFilterDTO filterDTO) {
         StringBuilder titleBuilder = new StringBuilder();
         titleBuilder.append("CONVOCATION POUR LA SURVEILLANCE DES EXAMENS\n");
 
-
-        // Add session type from filter if available, otherwise from current session
         if (filterDTO.getTypeSession() != null) {
             titleBuilder.append("Session ");
             titleBuilder.append(filterDTO.getTypeSession());
@@ -86,7 +95,6 @@ public class ConvocationService {
             titleBuilder.append("TOUTES LES SESSIONS");
         }
 
-        // Add semester from filter if available
         if (filterDTO.getSemestre() != null) {
             titleBuilder.append(" ").append(filterDTO.getSemestre());
         }
@@ -97,13 +105,10 @@ public class ConvocationService {
                 .setBold());
     }
 
-
-
     public byte[] generateConvocation(Long enseignantId, SurveillanceFilterDTO filterDTO) throws Exception {
         Enseignant enseignant = enseignantRepository.findById(enseignantId)
                 .orElseThrow(() -> new EntityNotFoundException("Enseignant non trouvé"));
 
-        // Get filtered surveillances for this teacher
         List<Surveillance> filteredSurveillances = surveillanceService
                 .filterSurveillances(filterDTO)
                 .stream()
@@ -113,24 +118,18 @@ public class ConvocationService {
                                 s.getEnseignantSecondaire().getId().equals(enseignantId)))
                 .collect(Collectors.toList());
 
-        // Get current active session for header
-        SessionExamen currentSession = sessionExamenRepository.findAll().stream()
-                .filter(SessionExamen::getEstActive)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Aucune session active trouvée"));
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
 
         try {
-            addHeader(document, filterDTO); // Pass filterDTO here
+            addHeader(document, filterDTO);
             addTitle(document, filterDTO);
             addTeacherInfo(document, enseignant);
             addSurveillancesTable(document, enseignant, filteredSurveillances);
             addRecapTable(document, enseignant, filteredSurveillances);
-            addSummary(document, enseignant, filteredSurveillances);
+            addFooterWithSignature(document, filteredSurveillances);
         } finally {
             document.close();
         }
@@ -142,14 +141,12 @@ public class ConvocationService {
         Table table = new Table(UnitValue.createPercentArray(new float[]{20, 15, 15, 30, 20}));
         table.setWidth(UnitValue.createPercentValue(100));
 
-        // Add headers
         addCell(table, "Date", true);
         addCell(table, "Début", true);
         addCell(table, "Fin", true);
         addCell(table, "Matière", true);
         addCell(table, "Salle", true);
 
-        // Add data rows if any exist
         if (!surveillances.isEmpty()) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
@@ -164,7 +161,6 @@ public class ConvocationService {
                         addCell(table, s.getSalle().getNumero(), false);
                     });
         } else {
-            // Add an empty row with a message
             Cell emptyCell = new Cell(1, 5)
                     .add(new Paragraph("Aucune surveillance trouvée"))
                     .setTextAlignment(TextAlignment.CENTER)
@@ -179,23 +175,19 @@ public class ConvocationService {
         Table recapTable = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
         recapTable.setWidth(UnitValue.createPercentValue(100));
 
-        // Headers
         recapTable.addCell(new Cell().add(new Paragraph("Type").setBold()));
         recapTable.addCell(new Cell().add(new Paragraph("Nombre de surveillances").setBold()));
 
-        // Count DS surveillances
         long dsCount = surveillances.stream()
                 .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE &&
                         s.getSessionExamen().getType() == TypeSession.DS)
                 .count();
 
-        // Only show DS count if there are DS surveillances
         if (dsCount > 0) {
             recapTable.addCell(new Cell().add(new Paragraph("Surveillances DS").setBold()));
             recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount))));
         }
 
-        // Count exam surveillances by niveau
         Map<String, Long> examSurveillancesByNiveau = surveillances.stream()
                 .filter(s -> s.getStatut() == StatutSurveillance.PLANIFIEE &&
                         (s.getSessionExamen().getType() == TypeSession.PRINCIPALE ||
@@ -205,17 +197,15 @@ public class ConvocationService {
                         Collectors.counting()
                 ));
 
-        // Add exam counts only for niveaux that have surveillances
         long totalExams = 0;
         for (Map.Entry<String, Long> entry : examSurveillancesByNiveau.entrySet()) {
-            if (entry.getValue() > 0) {  // Only add if there are surveillances for this niveau
+            if (entry.getValue() > 0) {
                 recapTable.addCell(new Cell().add(new Paragraph("Examen " + entry.getKey())));
                 recapTable.addCell(new Cell().add(new Paragraph(entry.getValue().toString())));
                 totalExams += entry.getValue();
             }
         }
 
-        // Only add total if there are any surveillances
         if (dsCount > 0 || totalExams > 0) {
             recapTable.addCell(new Cell().add(new Paragraph("TOTAL GÉNÉRAL").setBold()));
             recapTable.addCell(new Cell().add(new Paragraph(String.valueOf(dsCount + totalExams)).setBold()));
@@ -227,8 +217,6 @@ public class ConvocationService {
         }
     }
 
-
-
     private void addTeacherInfo(Document document, Enseignant enseignant) {
         document.add(new Paragraph(String.format("\nA l'attention de %s %s %s\n\n",
                 enseignant.getGrade() != null ? enseignant.getGrade() : "Mr/Mme",
@@ -236,22 +224,78 @@ public class ConvocationService {
                 enseignant.getNom()))
                 .setFontSize(12));
 
-        document.add(new Paragraph("Vous êtes prié(e) d'assurer la surveillance des épreuves selon le calendrier ci-après. Nous vous demandons de vous présenter dans la salle d'examen 10 minutes avant le début de l'épreuve.\nVeuillez également interdire strictement l'utilisation des téléphones par les étudiants pendant l'examen.\n" +
-                "\n\n"));
+        document.add(new Paragraph("Vous êtes prié(e) d'assurer la surveillance des épreuves selon le calendrier ci-après. Nous vous demandons de vous présenter dans la salle d'examen 10 minutes avant le début de l'épreuve.\nVeuillez également interdire strictement l'utilisation des téléphones par les étudiants pendant l'examen.\n"));
     }
 
-
-    private void addSummary(Document document, Enseignant enseignant, List<Surveillance> surveillances) {
-        int totalSurveillances = surveillances.size();
-
-        document.add(new Paragraph("\nRécapitulatif:\n")
+    private void addFooterWithSignature(Document document, List<Surveillance> surveillances) throws IOException {
+        // Ajouter le récapitulatif
+        document.add(new Paragraph("\nRécapitulatif:")
                 .setBold()
                 .setFontSize(12));
-        document.add(new Paragraph(String.format("Nombre total de surveillances: %d", totalSurveillances)));
+        document.add(new Paragraph(String.format("Nombre total de surveillances: %d", surveillances.size())));
 
-        document.add(new Paragraph("\n\nSignature du Chef de Département")
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setMarginTop(50));
+        // Espace avant le pied de page
+        document.add(new Paragraph("\n\n"));
+
+        // Créer le tableau du pied de page
+        Table footerTable = new Table(UnitValue.createPercentArray(new float[]{100}));
+        footerTable.setWidth(UnitValue.createPercentValue(100));
+        footerTable.setMarginTop(20);
+
+        // Ajouter le contenu de la signature
+        Cell footerCell = new Cell();
+        footerCell.setBorder(Border.NO_BORDER);
+        footerCell.setTextAlignment(TextAlignment.RIGHT);
+
+        // Récupérer la signature de l'admin
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<Administrateur> adminOptional = administrateurRepository.findByEmail(currentUserEmail);
+
+        if (adminOptional.isPresent()) {
+            Administrateur currentAdmin = adminOptional.get();
+            if (currentAdmin.getSignature() != null) {
+                try {
+                    String signaturePath = currentAdmin.getSignature();
+                    String cleanPath = signaturePath.contains("?") ?
+                            signaturePath.substring(0, signaturePath.indexOf("?")) :
+                            signaturePath;
+                    String filename = cleanPath.substring(cleanPath.lastIndexOf('/') + 1);
+                    Path imagePath = Paths.get("uploads/assets/images/signatures").resolve(filename).normalize();
+
+                    if (Files.exists(imagePath)) {
+                        // Ajouter l'image de signature
+                        ImageData imageData = ImageDataFactory.create(imagePath.toAbsolutePath().toUri().toURL());
+                        Image signatureImage = new Image(imageData);
+                        signatureImage.setWidth(150)
+                                .setHorizontalAlignment(HorizontalAlignment.RIGHT);
+
+                        // Ajouter le texte et l'image de signature
+                        Paragraph signatureParagraph = new Paragraph()
+                                .add("Signature du Chef de Département\n")
+                                .add(signatureImage)
+                                .add("\n" + currentAdmin.getPrenom() + " " + currentAdmin.getNom())
+                                .setTextAlignment(TextAlignment.RIGHT)
+                                .setMarginTop(10);
+
+                        footerCell.add(signatureParagraph);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur lors de l'ajout de la signature: " + e.getMessage());
+                    // Solution de repli avec texte seulement
+                    footerCell.add(new Paragraph("Signature du Chef de Département")
+                            .setTextAlignment(TextAlignment.RIGHT));
+                }
+            } else {
+                footerCell.add(new Paragraph("Signature du Chef de Département")
+                        .setTextAlignment(TextAlignment.RIGHT));
+            }
+        } else {
+            footerCell.add(new Paragraph("Signature du Chef de Département")
+                    .setTextAlignment(TextAlignment.RIGHT));
+        }
+
+        footerTable.addCell(footerCell);
+        document.add(footerTable);
     }
 
     private void addCell(Table table, String content, boolean isHeader) {
@@ -264,9 +308,7 @@ public class ConvocationService {
     }
 
     public byte[] generateAllConvocations(SurveillanceFilterDTO filterDTO) throws Exception {
-        // Get all teachers
         List<Enseignant> allEnseignants = enseignantRepository.findAll();
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdf = new PdfDocument(writer);
@@ -276,7 +318,6 @@ public class ConvocationService {
             boolean isFirstPage = true;
 
             for (Enseignant enseignant : allEnseignants) {
-                // Get filtered surveillances for this teacher
                 List<Surveillance> filteredSurveillances = surveillanceService
                         .filterSurveillances(filterDTO)
                         .stream()
@@ -286,10 +327,8 @@ public class ConvocationService {
                                         s.getEnseignantSecondaire().getId().equals(enseignant.getId())))
                         .collect(Collectors.toList());
 
-                // Only create a convocation if teacher has surveillances
                 if (!filteredSurveillances.isEmpty()) {
                     if (!isFirstPage) {
-                        // Add a new page for each teacher except the first one
                         document.add(new AreaBreak());
                     }
 
@@ -298,13 +337,12 @@ public class ConvocationService {
                     addTeacherInfo(document, enseignant);
                     addSurveillancesTable(document, enseignant, filteredSurveillances);
                     addRecapTable(document, enseignant, filteredSurveillances);
-                    addSummary(document, enseignant, filteredSurveillances);
+                    addFooterWithSignature(document, filteredSurveillances);
 
                     isFirstPage = false;
                 }
             }
 
-            // Add a message if no convocations were generated
             if (isFirstPage) {
                 document.add(new Paragraph("Aucune convocation à générer pour les critères sélectionnés.")
                         .setTextAlignment(TextAlignment.CENTER)
