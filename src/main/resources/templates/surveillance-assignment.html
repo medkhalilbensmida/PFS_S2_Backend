@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${subject}">Nouvelle Affectation</title>
+    <!-- Same style -->
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="background-color: #e9f7fe;">
+            <h2>Nouvelle Affectation de Surveillance</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour <span th:text="${professor.prenom}"></span>,</p>
+            
+            <p>Vous avez été affecté(e) à une nouvelle surveillance d'examen :</p>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;"><strong>Matière</strong></td>
+                    <td style="padding: 8px; border: 1px solid #ddd;" th:text="${surveillance.matiere.nom}"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;"><strong>Date/Heure</strong></td>
+
+                    <td style="padding: 8px; border: 1px solid #ddd;" 
+                    th:text="${#dates.format(surveillance.dateDebut, 'dd/MM/yyyy HH:mm')} + ' - ' + ${#dates.format(surveillance.dateFin, 'HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;"><strong>Salle</strong></td>
+                    <td style="padding: 8px; border: 1px solid #ddd;" th:text="${surveillance.salle.nom}"></td>
+                </tr>
+            </table>
+            
+            <p style="margin-top: 20px;">
+                <a th:href="${baseUrl} + '/confirm/' + ${surveillance.id}" 
+                   style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
+                   Confirmer ma disponibilité
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

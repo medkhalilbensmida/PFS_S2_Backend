@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 
 import java.util.Date;
@@ -33,4 +35,10 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
             @Param("dateFin") Date dateFin,
             @Param("excludeSurveillanceId") Long excludeSurveillanceId
     );
+        @Query("SELECT DISTINCT e FROM Enseignant e " +
+                "JOIN e.surveillancesPrincipales s1 ON s1.sessionExamen.id = :sessionId " +
+        "UNION " +
+        "SELECT DISTINCT e FROM Enseignant e " +
+        "JOIN e.surveillancesSecondaires s2 ON s2.sessionExamen.id = :sessionId")
+ List<Enseignant> findEnseignantsBySessionId(@Param("sessionId") Long sessionId);
 }

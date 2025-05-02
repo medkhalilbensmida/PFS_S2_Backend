@@ -1,7 +1,9 @@
 package tn.fst.spring.backend_pfs_s2.controller;
 
-import java.util.List; 
+import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,7 +42,13 @@ public class EmailSendController {
 
     @PostMapping("/send-dto")
     @Secured("ROLE_ADMIN")
-    public void sendEmailForDTO(@RequestBody NotificationEmailDTO dto) {
-        emailSendService.sendNotificationEmail(dto);
+    public ResponseEntity<String> sendEmailForDTO(@RequestBody NotificationEmailDTO dto) {
+        try {
+            emailSendService.sendNotificationEmail(dto);
+            return ResponseEntity.ok("Email sent successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body(e.getMessage());
+        }
     }
 }

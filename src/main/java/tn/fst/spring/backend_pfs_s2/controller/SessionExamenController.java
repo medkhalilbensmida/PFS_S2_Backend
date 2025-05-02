@@ -2,11 +2,16 @@ package tn.fst.spring.backend_pfs_s2.controller;
 
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+
+import lombok.RequiredArgsConstructor;
+import tn.fst.spring.backend_pfs_s2.dto.EnseignantDTO;
 import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDTO;
 import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
+import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.model.Semestre;
 import tn.fst.spring.backend_pfs_s2.model.SessionExamen;
+import tn.fst.spring.backend_pfs_s2.repository.SurveillanceRepository;
 import tn.fst.spring.backend_pfs_s2.service.SessionExamenService;
 import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 
@@ -16,16 +21,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/sessions")
 @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
+@RequiredArgsConstructor
 public class SessionExamenController {
 
     private final SessionExamenService sessionService;
     private final SurveillanceService surveillanceService;
 
-    public SessionExamenController(SessionExamenService sessionService,SurveillanceService surveillanceService) {
-        this.sessionService = sessionService;
-        this.surveillanceService = surveillanceService;
-    }
 
+
+    
 
 
     @GetMapping
@@ -94,6 +98,15 @@ public class SessionExamenController {
         return convertToDetailedDTO(session);
     }
     
+
+    @GetMapping("/{sessionId}/enseignants")
+    public List<EnseignantDTO> getEnseignantsForSession(@PathVariable Long sessionId) {
+        return surveillanceService.getEnseignantsForSession(sessionId);
+    }
+
+
+
+
 
     private SessionExamenDetailsDTO convertToDetailedDTO(SessionExamen session) {
         if (session == null) return null;

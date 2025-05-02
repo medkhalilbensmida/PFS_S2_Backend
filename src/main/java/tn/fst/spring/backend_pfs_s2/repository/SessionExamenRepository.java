@@ -11,4 +11,6 @@ import java.util.List;
 public interface SessionExamenRepository extends JpaRepository<SessionExamen, Long> {
     List<SessionExamen> findByDateDebutAndDateFin(Date dateDebut, Date dateFin);
 
+    
+
 }

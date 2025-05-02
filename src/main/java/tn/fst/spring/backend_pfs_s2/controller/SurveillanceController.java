@@ -158,6 +158,8 @@ public class SurveillanceController {
         }
     }
 
+
+
     // --- Méthodes de Conversion ---
 
     private SurveillanceDTO convertToDTO(Surveillance surveillance) {
@@ -185,6 +187,11 @@ public class SurveillanceController {
         return dto;
 
     }
+
+
+    
+
+
 
     private Surveillance convertToEntity(SurveillanceDTO dto) {
         // (Garder et adapter la méthode convertToEntity existante)

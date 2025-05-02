@@ -76,7 +76,7 @@ public class MailService {
 
     }
 
-    //@PostConstruct
+    @PostConstruct
     public void sendTestEmail() {
         try {
             Map<String, Object> variables = new HashMap<>();

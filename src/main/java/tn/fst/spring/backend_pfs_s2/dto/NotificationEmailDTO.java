@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.Date;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -14,4 +15,6 @@ public class NotificationEmailDTO {
     private String message;
     private Date date;
     private String template;
+    private Long session; 
+    
 }

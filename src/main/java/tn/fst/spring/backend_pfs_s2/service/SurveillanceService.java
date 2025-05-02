@@ -235,6 +235,22 @@ public class SurveillanceService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<EnseignantDTO> getEnseignantsForSession(Long sessionId) {
+        // Verify session exists first
+        if (!sessionExamenRepository.existsById(sessionId)) {
+            throw new EntityNotFoundException("Session non trouvée avec l'ID : " + sessionId);
+        }
+        
+        // Get all professors involved in this session's surveillances
+        List<Enseignant> enseignants = surveillanceRepository.findEnseignantsBySessionId(sessionId);
+        
+        // Convert to DTOs
+        return enseignants.stream()
+                .map(this::convertToEnseignantDTO)
+                .toList();
+    }
+
     @Transactional
     public void deleteSurveillance(Long id) {
         if (!surveillanceRepository.existsById(id)) {

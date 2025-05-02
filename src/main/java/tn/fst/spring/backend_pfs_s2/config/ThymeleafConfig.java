@@ -11,21 +11,21 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 
 @Configuration
 public class ThymeleafConfig implements WebMvcConfigurer {
-    @Bean
-    public ITemplateResolver emailTemplateResolver() {
-        SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
-        templateResolver.setPrefix("classpath:/templates/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        templateResolver.setCharacterEncoding("UTF-8");
-        return templateResolver;
-    }
+    // @Bean
+    // public ITemplateResolver emailTemplateResolver() {
+    //     SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
+    //     templateResolver.setPrefix("classpath:/templates/");
+    //     templateResolver.setSuffix(".html");
+    //     templateResolver.setTemplateMode(TemplateMode.HTML);
+    //     templateResolver.setCharacterEncoding("UTF-8");
+    //     return templateResolver;
+    // }
 
-    @Bean
-    public SpringTemplateEngine templateEngine() {
-        SpringTemplateEngine engine = new SpringTemplateEngine();
-        engine.setTemplateResolver(emailTemplateResolver());
+    // @Bean
+    // public SpringTemplateEngine templateEngine() {
+    //     SpringTemplateEngine engine = new SpringTemplateEngine();
+    //     engine.setTemplateResolver(emailTemplateResolver());
 
-        return engine;
-    }
+    //     return engine;
+    // }
 }
