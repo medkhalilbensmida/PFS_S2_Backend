@@ -12,6 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -30,6 +32,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private MatiereRepository matiereRepository;
+
+    @Autowired
+    private SectionRepository sectionRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -55,6 +60,7 @@ public class DataInitializer implements CommandLineRunner {
         insertAdministrateurs();
         insertEnseignants();
         insertAnneesUniversitaires();
+        insertSections();
         insertMatieres();
         insertSalles();
         insertSessionsExamen();
@@ -192,18 +198,50 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void insertSections() {
+        List<Section> sections = Arrays.asList(
+                new Section("Informatique", 150),
+                new Section("Mathématiques", 120),
+                new Section("Physique", 100),
+                new Section("Chimie", 90),
+                new Section("Biologie", 80),
+                new Section("Géologie", 70)
+        );
+
+        for (Section section : sections) {
+            if (!sectionRepository.existsById(section.getName())) {
+                sectionRepository.save(section);
+            }
+        }
+    }
+
     private void insertMatieres() {
+        Map<String, Section> sectionMap = new HashMap<>();
+        sectionRepository.findAll().forEach(section -> sectionMap.put(section.getName(), section));
+
+        Section infoSection = sectionMap.get("Informatique");
+        Section mathSection = sectionMap.get("Mathématiques");
+        Section physSection = sectionMap.get("Physique");
+        Section chimSection = sectionMap.get("Chimie");
+        Section bioSection = sectionMap.get("Biologie");
+        Section geoSection = sectionMap.get("Géologie");
+
+        if (infoSection == null || mathSection == null || physSection == null || chimSection == null || bioSection == null || geoSection == null) {
+            System.err.println("Error in DataInitializer: Not all required sections found in the database. Cannot initialize Matieres.");
+            return;
+        }
+
         List<Matiere> matieres = Arrays.asList(
-                new Matiere("L1", "Informatique", "INF101", "Programmation Java"),
-                new Matiere("L2", "Mathématiques", "MAT201", "Algèbre linéaire"),
-                new Matiere("L1", "Physique", "PHY101", "Mécanique classique"),
-                new Matiere("L2", "Chimie", "CHM201", "Chimie organique"),
-                new Matiere("L1", "Biologie", "BIO101", "Biologie cellulaire"),
-                new Matiere("L2", "Géologie", "GEO201", "Géologie structurale"),
-                new Matiere("L1", "Informatique", "INF102", "Structures de données"),
-                new Matiere("L2", "Mathématiques", "MAT202", "Analyse numérique"),
-                new Matiere("L1", "Physique", "PHY102", "Électromagnétisme"),
-                new Matiere("L2", "Chimie", "CHM202", "Chimie inorganique")
+                new Matiere("L1", infoSection, "INF101", "Programmation Java"),
+                new Matiere("L2", mathSection, "MAT201", "Algèbre linéaire"),
+                new Matiere("L1", physSection, "PHY101", "Mécanique classique"),
+                new Matiere("L2", chimSection, "CHM201", "Chimie organique"),
+                new Matiere("L1", bioSection, "BIO101", "Biologie cellulaire"),
+                new Matiere("L2", geoSection, "GEO201", "Géologie structurale"),
+                new Matiere("L1", infoSection, "INF102", "Structures de données"),
+                new Matiere("L2", mathSection, "MAT202", "Analyse numérique"),
+                new Matiere("L1", physSection, "PHY102", "Électromagnétisme"),
+                new Matiere("L2", chimSection, "CHM202", "Chimie inorganique")
         );
 
         for (Matiere matiere : matieres) {

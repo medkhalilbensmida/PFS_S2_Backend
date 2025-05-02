@@ -3,11 +3,16 @@ package tn.fst.spring.backend_pfs_s2.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tn.fst.spring.backend_pfs_s2.dto.EnseignantMatiereDTO;
+import tn.fst.spring.backend_pfs_s2.dto.MatiereDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SectionDTO;
+import tn.fst.spring.backend_pfs_s2.exception.ResourceNotFoundException;
 import tn.fst.spring.backend_pfs_s2.model.*;
 import tn.fst.spring.backend_pfs_s2.repository.EnseigneRepository;
 import tn.fst.spring.backend_pfs_s2.repository.MatiereRepository;
+import tn.fst.spring.backend_pfs_s2.repository.SectionRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,12 +20,27 @@ public class MatiereService {
 
     private final MatiereRepository matiereRepository;
     private final EnseigneRepository enseigneRepository;
+    private final SectionRepository sectionRepository;
 
     @Autowired
     public MatiereService(MatiereRepository matiereRepository,
-                          EnseigneRepository enseigneRepository) {
+                          EnseigneRepository enseigneRepository,
+                          SectionRepository sectionRepository) {
         this.matiereRepository = matiereRepository;
         this.enseigneRepository = enseigneRepository;
+        this.sectionRepository = sectionRepository;
+    }
+
+    private MatiereDTO convertToMatiereDTO(Matiere matiere) {
+        MatiereDTO dto = new MatiereDTO();
+        dto.setId(matiere.getId());
+        dto.setNiveau(matiere.getNiveau());
+        dto.setCode(matiere.getCode());
+        dto.setNom(matiere.getNom());
+        if (matiere.getSection() != null) {
+            dto.setSection(new SectionDTO(matiere.getSection().getName(), matiere.getSection().getStudentNumber()));
+        }
+        return dto;
     }
 
     public List<Matiere> getAllMatieres() {
@@ -39,7 +59,9 @@ public class MatiereService {
 
         dto.setId(matiere.getId());
         dto.setNiveau(matiere.getNiveau());
-        dto.setSection(matiere.getSection());
+        if (matiere.getSection() != null) {
+            dto.setSection(matiere.getSection().getName());
+        }
         dto.setCode(matiere.getCode());
         dto.setNom(matiere.getNom());
         dto.setSemestre(enseigne.getNumSemestre());
@@ -56,6 +78,25 @@ public class MatiereService {
 
     public Matiere getMatiereById(Long id) {
         return matiereRepository.findById(id).orElse(null);
+    }
+
+    public List<MatiereDTO> findMatieresBySectionName(String sectionName) {
+        Section section = sectionRepository.findById(sectionName)
+                .orElseThrow(() -> new ResourceNotFoundException("Section not found with name: " + sectionName));
+        List<Matiere> matieres = matiereRepository.findBySection(section);
+        return matieres.stream()
+                       .map(this::convertToMatiereDTO)
+                       .collect(Collectors.toList());
+    }
+
+    public Map<String, List<MatiereDTO>> findAllMatieresGroupedBySectionName() {
+        List<Matiere> allMatieres = matiereRepository.findAll();
+        return allMatieres.stream()
+                          .filter(m -> m.getSection() != null)
+                          .collect(Collectors.groupingBy(
+                                  m -> m.getSection().getName(),
+                                  Collectors.mapping(this::convertToMatiereDTO, Collectors.toList())
+                          ));
     }
 
     public Matiere createMatiere(Matiere matiere) {

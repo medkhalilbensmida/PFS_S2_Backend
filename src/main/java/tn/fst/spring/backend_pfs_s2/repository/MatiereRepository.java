@@ -3,6 +3,7 @@ package tn.fst.spring.backend_pfs_s2.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import tn.fst.spring.backend_pfs_s2.model.Matiere;
+import tn.fst.spring.backend_pfs_s2.model.Section;
 
 import java.util.List;
 
@@ -10,4 +11,5 @@ import java.util.List;
 public interface MatiereRepository extends JpaRepository<Matiere, Long> {
     List<Matiere> findByCode(String code);
     List<Matiere> findByEnseignes_Enseignant_Id(Long enseignantId);
+    List<Matiere> findBySection(Section section);
 }

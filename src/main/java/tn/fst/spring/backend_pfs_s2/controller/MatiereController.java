@@ -6,10 +6,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.*;
 import tn.fst.spring.backend_pfs_s2.model.Matiere;
+import tn.fst.spring.backend_pfs_s2.model.Section;
 import tn.fst.spring.backend_pfs_s2.service.MatiereService;
 import tn.fst.spring.backend_pfs_s2.service.CustomUserDetails;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +33,16 @@ public class MatiereController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/bySection/{sectionName}")
+    public List<MatiereDTO> getMatieresBySection(@PathVariable String sectionName) {
+        return matiereService.findMatieresBySectionName(sectionName);
+    }
+
+    @GetMapping("/groupedBySection")
+    public Map<String, List<MatiereDTO>> getAllMatieresGroupedBySection() {
+        return matiereService.findAllMatieresGroupedBySectionName();
+    }
+
     @GetMapping("/my")
     @Secured("ROLE_ENSEIGNANT")
     public List<EnseignantMatiereDTO> getMyMatieres() {
@@ -40,9 +52,14 @@ public class MatiereController {
 
         return matiereService.getMatieresDetailsByEnseignantId(enseignantId);
     }
+
     @GetMapping("/{id}")
     public MatiereDTO getMatiereById(@PathVariable Long id) {
-        return convertToDTO(matiereService.getMatiereById(id));
+        Matiere matiere = matiereService.getMatiereById(id);
+        if (matiere == null) {
+            return null;
+        }
+        return convertToDTO(matiere);
     }
 
     @PostMapping
@@ -69,7 +86,9 @@ public class MatiereController {
         MatiereDTO dto = new MatiereDTO();
         dto.setId(matiere.getId());
         dto.setNiveau(matiere.getNiveau());
-        dto.setSection(matiere.getSection());
+        if (matiere.getSection() != null) {
+            dto.setSection(new SectionDTO(matiere.getSection().getName(), matiere.getSection().getStudentNumber()));
+        }
         dto.setCode(matiere.getCode());
         dto.setNom(matiere.getNom());
         return dto;
@@ -79,7 +98,6 @@ public class MatiereController {
         Matiere matiere = new Matiere();
         matiere.setId(dto.getId());
         matiere.setNiveau(dto.getNiveau());
-        matiere.setSection(dto.getSection());
         matiere.setCode(dto.getCode());
         matiere.setNom(dto.getNom());
         return matiere;

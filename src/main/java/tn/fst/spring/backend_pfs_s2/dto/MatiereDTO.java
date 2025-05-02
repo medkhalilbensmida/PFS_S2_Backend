@@ -7,7 +7,7 @@ import lombok.Data;
 public class MatiereDTO {
     private Long id;
     private String niveau;
-    private String section;
+    private SectionDTO section;
     private String code;
     private String nom;
 }

@@ -13,7 +13,11 @@ public class Matiere {
     private Long id;
 
     private String niveau;
-    private String section;
+
+    @ManyToOne
+    @JoinColumn(name = "section_name", referencedColumnName = "name")
+    private Section section;
+
     private String code;
     private String nom;
 
@@ -24,7 +28,7 @@ public class Matiere {
     public Matiere() {}
 
     // Constructeur avec paramètres
-    public Matiere(String niveau, String section, String code, String nom) {
+    public Matiere(String niveau, Section section, String code, String nom) {
         this.niveau = niveau;
         this.section = section;
         this.code = code;
