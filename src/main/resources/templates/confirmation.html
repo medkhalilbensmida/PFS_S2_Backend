@@ -24,7 +24,7 @@
                 <li><strong>Matière:</strong> <span th:text="${surveillance.matiere.nom}"></span></li>
                 <li><strong>Salle:</strong> <span th:text="${surveillance.salle.nom}"></span></li>
                 <li><strong>Date:</strong> <span th:text="${#dates.format(surveillance.dateDebut, 'dd/MM/yyyy HH:mm')}"></span></li>
-                <li><strong>Durée:</strong> <span th:text="${surveillance.duree}"></span> heures</li>
+                <li><strong>Durée:</strong> <span th:text="${duree}"></span> heures</li>
             </ul>
             
             <p th:text="${message}"></p>

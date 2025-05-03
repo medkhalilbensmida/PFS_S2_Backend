@@ -37,7 +37,13 @@ public class EmailSendController {
     @PostMapping("/send-notif")
     @Secured("ROLE_ADMIN")
     public void sendEmailForNotification(@RequestBody Notification notification) {
-        emailSendService.sendNotificationEmailFromNotification(notification);
+        try
+        {
+            emailSendService.sendNotificationEmailFromNotification(notification);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @PostMapping("/send-dto")

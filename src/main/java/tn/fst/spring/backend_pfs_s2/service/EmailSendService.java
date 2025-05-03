@@ -40,7 +40,12 @@ public class EmailSendService{
     public void sendNotificationEmailList(List<Notification> notifications){
         for (Notification notification : notifications) {
             if (notification.getDestinataire() != null && notification.getDestinataire().getEmail() != null) {
-                sendNotificationEmailFromNotification(notification);
+               try{
+                   sendNotificationEmailFromNotification(notification);
+               }
+               catch (Exception e  ){
+                e.printStackTrace();
+               }
             }
         }
     }
@@ -56,7 +61,7 @@ public class EmailSendService{
         return dto;
     }
 
-    public void sendNotificationEmailFromNotification(Notification notification){
+    public void sendNotificationEmailFromNotification(Notification notification) throws Exception{
         NotificationEmailDTO dto = toNotificatioDto(notification);
         sendNotificationEmail(dto);
         notification.markEmailAsSent();
@@ -72,12 +77,13 @@ public class EmailSendService{
                 mailRequest.setIsHtml(true);
 
                 // Context variablesy
+                    System.out.println("THE DTO IS" + dto);
                     Map<String, Object> context = this.generateContext(dto.getSession(),dto.getTemplate(),dto.getToEmail());
                     context.put("message", dto.getMessage()); // Optionally still override or add some values
-                    System.out.println("Context: " + context);
                     mailRequest.setContext(context);
         
                     // Send email
+
                     mailService.sendEmail(mailRequest);
                 
         
@@ -90,28 +96,29 @@ public class EmailSendService{
             if (sessionId == null) {
                 return context;
             }
+            System.out.println("Sending to: " + email);
+
         
             // Get professor data
             Enseignant prof = enseignantRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("No Enseignant found with email: " + email));
             
+
             // Add professor info to context
-            context.put("professor", Map.of(
-                "id", prof.getId(),
-                "nom", prof.getNom(),
-                "prenom", prof.getPrenom(),
-                "email", prof.getEmail()
-            ));
+            context.put("professor",prof);
+
+
         
             // Get session with details
             SessionExamen session = sessionExamenService.getSessionWithDetails(sessionId);
             if (session != null) {
                 // Find the professor's surveillance in this session
+
                 Optional<Surveillance> professorSurveillance = session.getSurveillances().stream()
                     .filter(s -> (s.getEnseignantPrincipal() != null && s.getEnseignantPrincipal().getId().equals(prof.getId())) ||
                                 (s.getEnseignantSecondaire() != null && s.getEnseignantSecondaire().getId().equals(prof.getId())))
                     .findFirst();
-        
+                
                 if (professorSurveillance.isPresent()) {
                     Surveillance surveillance = professorSurveillance.get();
                     
@@ -130,8 +137,8 @@ public class EmailSendService{
                     
                     if (surveillance.getSalle() != null) {
                         surveillanceContext.put("salle", Map.of(
-                            "nom", surveillance.getSalle().getEtage(),
-                            "numero", surveillance.getSalle().getNumero()
+                            "nom", surveillance.getSalle().getNumero(),
+                            "numero", surveillance.getSalle().getEtage()
                         ));
                     }
                     
@@ -143,11 +150,17 @@ public class EmailSendService{
                         double durationHours = durationMillis / (1000.0 * 60 * 60);
                         context.put("duree", String.format("%.1f", durationHours));
                     }
+                    else {
+                        context.put("duree", 0);
+                    }
+                }
+                else {
+                    throw new Exception("Please verify the Professor Email.");
                 }
             }
         
             // Add common context variables
-            context.put("baseUrl", "https://your-university.edu");
+            context.put("baseUrl", "https://localhost:4200");
             context.put("currentDate", new Date());
             
             return context;

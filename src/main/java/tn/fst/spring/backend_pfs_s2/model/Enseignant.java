@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class Enseignant extends Utilisateur {
 
     @OneToMany(mappedBy = "enseignant")
     @JsonIgnore
+    @ToString.Exclude
     private List<DisponibiliteEnseignant> disponibilites;
 
     @OneToMany(mappedBy = "enseignantPrincipal")

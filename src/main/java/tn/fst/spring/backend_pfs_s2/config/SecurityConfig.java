@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/error",
                                 "/swagger-ui/**",
+                                "/api/images/**",       // Allow all image requests
+                                "/public/**",  
+                                "/error",
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
