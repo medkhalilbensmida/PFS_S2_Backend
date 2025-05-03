@@ -230,12 +230,11 @@ public class ConvocationService {
     private void addFooterWithSignature(Document document, List<Surveillance> surveillances) throws IOException {
         // Ajouter le récapitulatif
         document.add(new Paragraph("\nRécapitulatif:")
-                .setBold()
-                .setFontSize(12));
+               .setBold()
+               .setFontSize(12));
         document.add(new Paragraph(String.format("Nombre total de surveillances: %d", surveillances.size())));
 
-        // Espace avant le pied de page
-        document.add(new Paragraph("\n\n"));
+
 
         // Créer le tableau du pied de page
         Table footerTable = new Table(UnitValue.createPercentArray(new float[]{100}));
