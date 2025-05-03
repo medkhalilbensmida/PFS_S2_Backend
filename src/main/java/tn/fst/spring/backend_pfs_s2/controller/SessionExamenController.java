@@ -5,11 +5,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
+
+import lombok.RequiredArgsConstructor;
+import tn.fst.spring.backend_pfs_s2.dto.EnseignantDTO;
 import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SessionExamenDetailsDTO;
+import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
+import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.model.AnneeUniversitaire;
 import tn.fst.spring.backend_pfs_s2.model.Semestre;
 import tn.fst.spring.backend_pfs_s2.model.SessionExamen;
+import tn.fst.spring.backend_pfs_s2.repository.SurveillanceRepository;
 import tn.fst.spring.backend_pfs_s2.service.SessionExamenService;
+import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,13 +27,16 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/sessions")
 @Secured({"ROLE_ADMIN", "ROLE_ENSEIGNANT"})
+@RequiredArgsConstructor
 public class SessionExamenController {
 
     private final SessionExamenService sessionService;
+    private final SurveillanceService surveillanceService;
 
-    public SessionExamenController(SessionExamenService sessionService) {
-        this.sessionService = sessionService;
-    }
+
+
+    
+
 
     @GetMapping
     public ResponseEntity<List<SessionExamenDTO>> getAllSessions() {
@@ -34,6 +45,8 @@ public class SessionExamenController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(sessions);
     }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getSessionById(@PathVariable Long id) {
@@ -136,4 +149,48 @@ public class SessionExamenController {
 
         return session;
     }
+
+    @GetMapping("/detailed/{id}")
+    public SessionExamenDetailsDTO getSessionDetailsByID(@PathVariable Long id){
+        SessionExamen session = sessionService.getSessionWithDetails(id);
+        return convertToDetailedDTO(session);
+    }
+    
+
+    @GetMapping("/{sessionId}/enseignants")
+    public List<EnseignantDTO> getEnseignantsForSession(@PathVariable Long sessionId) {
+        return surveillanceService.getEnseignantsForSession(sessionId);
+    }
+
+
+
+
+
+    private SessionExamenDetailsDTO convertToDetailedDTO(SessionExamen session) {
+        if (session == null) return null;
+        SessionExamenDetailsDTO dto = new SessionExamenDetailsDTO();
+        dto.setId(session.getId());
+        dto.setDateDebut(session.getDateDebut());
+        dto.setDateFin(session.getDateFin());
+        dto.setType(session.getType().name());
+        dto.setEstActive(session.getEstActive());
+        dto.setNumSemestre(session.getNumSemestre().toString());
+
+        if (session.getAnnee() != null) {
+            dto.setAnneeUniversitaireId(session.getAnnee().getId());
+        }
+
+        if (session.getSurveillances() != null) {
+            dto.setSurveillances(
+                session.getSurveillances().stream().map(surv -> {
+                    SurveillanceDetailsDTO sDto = surveillanceService.getDetailedSurveillanceFromSurveillance(surv);
+                    return sDto;
+                }).toList()
+            );
+        }
+
+        return dto;
+    }
+        
+
 }

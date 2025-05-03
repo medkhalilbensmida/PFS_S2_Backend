@@ -1,20 +1,22 @@
-package tn.fst.spring.backend_pfs_s2.service.mail;
+package tn.fst.spring.backend_pfs_s2.service;
 
 import java.util.Map;
 
 import java.util.HashMap;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import tn.fst.spring.backend_pfs_s2.dto.mail.MailRequest;
+import tn.fst.spring.backend_pfs_s2.dto.MailRequest;
 /**
  * Service for sending emails using a template engine.
  * This service utilizes JavaMailSender for sending emails and SpringTemplateEngine
@@ -59,14 +61,22 @@ public class MailService {
             String htmlContent = templateEngine.process(template, context);
             System.out.println(htmlContent);
             helper.setText(htmlContent, true);
+            
         } else {
             helper.setText(request.getMessage(),false);
+        }
+
+        // Handle attachments
+        if (request.getAttachments() != null) {
+            for (MailRequest.Attachment attachment : request.getAttachments()) {
+                helper.addAttachment(attachment.getFileName(), new ByteArrayResource(attachment.getFileData()));
+            }
         }
         mailSender.send(message);
 
     }
 
-    //@PostConstruct
+    @PostConstruct
     public void sendTestEmail() {
         try {
             Map<String, Object> variables = new HashMap<>();
@@ -87,4 +97,3 @@ public class MailService {
         }
     }
 }
-

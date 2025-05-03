@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${subject}">Rappel de Surveillance</title>
+    <!-- Same style as confirmation.html -->
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Rappel: Surveillance d'Examen</h2>
+        </div>
+        <div class="content">
+            <p>Cher <span th:text="${professor.prenom}"></span> <span th:text="${professor.nom}"></span>,</p>
+            
+            <p>Ceci est un rappel pour votre surveillance prévue :</p>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <h3 th:text="${surveillance.matiere.nom}"></h3>
+                <p>
+                    <strong>Date:</strong> <span th:text="${#dates.format(surveillance.dateDebut, 'EEEE dd MMMM yyyy')}"></span><br>
+                    <strong>Heure:</strong> <span th:text="${#dates.format(surveillance.dateDebut, 'HH:mm')}"></span> - 
+                    <span th:text="${#dates.format(surveillance.dateFin, 'HH:mm')}"></span><br>
+                    <strong>Lieu:</strong> <span th:text="${surveillance.salle.nom}"></span>
+                </p>
+            </div>
+            
+            <p style="margin-top: 20px;" th:text="${message} ?: 'Merci de vous présenter 15 minutes avant le début.'"></p>
+            <p>Cordialement,<br>Le Service des Examens</p>
+
+        </div>
+    </div>
+</body>
+</html>

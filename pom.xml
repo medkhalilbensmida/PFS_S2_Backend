@@ -26,6 +26,8 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -74,6 +76,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-java8time</artifactId>
+            <version>3.0.4.RELEASE</version> <!-- Compatible with Thymeleaf 3.x -->
         </dependency>
 
         <!-- Database -->
@@ -165,8 +172,7 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <includes>
-                    <include>**/*.properties</include>
-                    <include>**/*.xml</include>
+                    <include>**/*</include> <!-- ✅ Include everything -->
                 </includes>
             </resource>
         </resources>

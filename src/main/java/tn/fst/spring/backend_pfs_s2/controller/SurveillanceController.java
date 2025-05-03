@@ -9,6 +9,7 @@ import tn.fst.spring.backend_pfs_s2.dto.AssignementRequestDTO; // Ajoutez cet im
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDTO;
 import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 import tn.fst.spring.backend_pfs_s2.service.export.ConvocationService;
+import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.model.*; // Assurez-vous que les modèles nécessaires sont importés
 import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository; // Ajoutez si nécessaire pour la conversion
 import tn.fst.spring.backend_pfs_s2.repository.MatiereRepository;     // Ajoutez si nécessaire pour la conversion
@@ -64,6 +65,18 @@ public class SurveillanceController {
         return surveillanceService.getAllSurveillances().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+
+    @GetMapping("/detailed")
+    public List<SurveillanceDetailsDTO> getAllDetailedSurveillances(){
+        return surveillanceService.getAllDetailedSurveillance();
+    }
+
+
+    @GetMapping("/detailed/{id}")
+    public SurveillanceDetailsDTO getDetailedSurveillance(@PathVariable Long id) {
+        return surveillanceService.getDetailedSurveillance(id);
     }
 
     @GetMapping("/{id}")
@@ -158,6 +171,8 @@ public class SurveillanceController {
         }
     }
 
+
+
     // --- Méthodes de Conversion ---
 
     private SurveillanceDTO convertToDTO(Surveillance surveillance) {
@@ -187,6 +202,11 @@ public class SurveillanceController {
         return dto;
 
     }
+
+
+    
+
+
 
     private Surveillance convertToEntity(SurveillanceDTO dto) {
         // (Garder et adapter la méthode convertToEntity existante)

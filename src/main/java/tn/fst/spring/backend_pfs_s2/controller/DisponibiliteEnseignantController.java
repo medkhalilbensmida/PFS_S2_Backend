@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.DisponibiliteEnseignantDTO;
 import tn.fst.spring.backend_pfs_s2.model.DisponibiliteEnseignant;
-import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.service.CustomUserDetails;
 import tn.fst.spring.backend_pfs_s2.service.DisponibiliteEnseignantService;
 

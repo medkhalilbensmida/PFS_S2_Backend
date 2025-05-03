@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${subject}">Surveillance Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 15px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { margin-top: 20px; font-size: 0.8em; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Confirmation de Surveillance</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour <span th:text="${professor.prenom}"></span>,</p>
+            
+            <p>Votre surveillance d'examen a été confirmée avec les détails suivants :</p>
+            
+            <ul>
+                <li><strong>Matière:</strong> <span th:text="${surveillance.matiere.nom}"></span></li>
+                <li><strong>Salle:</strong> <span th:text="${surveillance.salle.nom}"></span></li>
+                <li><strong>Date:</strong> <span th:text="${#dates.format(surveillance.dateDebut, 'dd/MM/yyyy HH:mm')}"></span></li>
+                <li><strong>Durée:</strong> <span th:text="${duree}"></span> heures</li>
+            </ul>
+            
+            <p th:text="${message}"></p>
+            
+            <p>Cordialement,<br>Le Service des Examens</p>
+        </div>
+        <div class="footer">
+            <p>Ceci est un message automatique, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

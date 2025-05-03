@@ -95,7 +95,16 @@ public class SessionExamenService {
                     "Impossible de supprimer la session car elle est liée à des surveillances"
             );
         }
-
-        sessionExamenRepository.delete(session);
     }
+    public void getSessionDetails(Long id){
+
+    }
+    public SessionExamen getSessionWithDetails(Long id) {
+        SessionExamen sessionExamen = sessionExamenRepository.findById(id).orElse(null);
+        if (sessionExamen != null) {
+            sessionExamen.getSurveillances().size();
+        }
+        return sessionExamen;
+    }
+
 }

@@ -54,6 +54,8 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/error",
                                 "/swagger-ui/**",
+                                "/public/**",  
+                                "/error",
                                 "/v3/api-docs/**",
                                 "/api/images/**",
                                 "/assets/**"
