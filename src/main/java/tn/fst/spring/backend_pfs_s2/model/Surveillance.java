@@ -44,8 +44,7 @@ public class Surveillance {
     @JoinColumn(name = "enseignant_secondaire_id")
     private Enseignant enseignantSecondaire;
 
-    @OneToMany(mappedBy = "surveillance")
-    private List<Notification> notifications;
+
 
     public Surveillance() {}
 

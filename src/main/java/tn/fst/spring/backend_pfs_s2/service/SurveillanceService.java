@@ -43,6 +43,9 @@ public class SurveillanceService {
     @Autowired
     private ExcelExportService excelExportService;
 
+    @Autowired
+    private NotificationService notificationService ;
+
 
 
     // Injecter les autres repositories nécessaires pour la validation des clés étrangères
@@ -309,11 +312,19 @@ public class SurveillanceService {
         // Supprimer d'abord les disponibilités associées
         List<DisponibiliteEnseignant> disponibilites =
                 disponibiliteRepository.findBySurveillanceId(id);
+
+        List<Enseignant> enseignants = disponibilites.stream()
+                .map(DisponibiliteEnseignant::getEnseignant)
+                .collect(Collectors.toList());
+
+
         disponibiliteRepository.deleteAll(disponibilites);
 
-        // Supprimer les notifications associées (optionnel, dépend de vos règles métier)
-        // List<Notification> notifications = notificationRepository.findBySurveillanceId(id);
-        // notificationRepository.deleteAll(notifications);
+        // Notifier les enseignants concernés
+        for (Enseignant enseignant : enseignants) {
+            System.out.println("sending deletion notif to "+ enseignant.getNom());
+            notificationService.sendSessionDeletedNotification(enseignant, surveillanceRepository.getById(id));
+        }
 
         // Puis supprimer la surveillance
         surveillanceRepository.deleteById(id);

@@ -37,41 +37,8 @@ public class EmailSendService{
     private final ConvocationService convocationService;
    
     
-    public void sendEmailAll() {
-        List<Notification> notifications = notificationRepository.findAll();
-        sendNotificationEmailList(notifications);
-    }
 
-    public void sendNotificationEmailList(List<Notification> notifications){
-        for (Notification notification : notifications) {
-            if (notification.getDestinataire() != null && notification.getDestinataire().getEmail() != null) {
-               try{
-                   sendNotificationEmailFromNotification(notification);
-               }
-               catch (Exception e  ){
-                e.printStackTrace();
-               }
-            }
-        }
-    }
-    private NotificationEmailDTO toNotificatioDto(Notification notification){
-        NotificationEmailDTO dto = new NotificationEmailDTO(
-            notification.getDestinataire().getEmail(),
-            "Nouvelle Notification: " + notification.getType(),
-            notification.getMessage(),
-            notification.getDateEnvoi(),
-            notification.getType().toString(),
-            null
-        );
-        return dto;
-    }
 
-    public void sendNotificationEmailFromNotification(Notification notification) throws Exception{
-        NotificationEmailDTO dto = toNotificatioDto(notification);
-        sendNotificationEmail(dto);
-        notification.markEmailAsSent();
-        notificationRepository.save(notification);
-    }
 
         public void sendNotificationEmail(NotificationEmailDTO dto) throws Exception {
                 // Create mail request

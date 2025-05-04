@@ -45,7 +45,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
                 )
@@ -58,13 +58,17 @@ public class SecurityConfig {
                                 "/error",
                                 "/v3/api-docs/**",
                                 "/api/images/**",
-                                "/assets/**"
+                                "/assets/**",
+                                "/ws-notifications/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
+                )
+                .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(authenticationEntryPoint)
+            );
 
         // Ajouter le filtre JWT avant le filtre d'authentification par défaut
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

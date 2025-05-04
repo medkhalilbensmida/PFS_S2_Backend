@@ -66,7 +66,6 @@ public class DataInitializer implements CommandLineRunner {
         insertSessionsExamen();
         insertSurveillances();
         insertEnseignes();
-        insertNotifications();
         initDisponibilitesForAllSurveillances();
     }
 
@@ -432,46 +431,46 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    private void insertNotifications() throws ParseException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        List<Enseignant> enseignants = enseignantRepository.findAll();
-        List<Surveillance> surveillances = surveillanceRepository.findAll();
+//     private void insertNotifications() throws ParseException {
+//         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+//         List<Enseignant> enseignants = enseignantRepository.findAll();
+//         List<Surveillance> surveillances = surveillanceRepository.findAll();
 
-        // Création de 50 notifications variées
-        List<Notification> notifications = Arrays.asList(
-                // Notifications d'affectation
-                new Notification("Affectation à la surveillance de l'examen d'Algorithmique", dateFormat.parse("2023-12-10 09:00"), false, TypeNotification.AFFECTATION, enseignants.get(0), surveillances.get(0)),
-                new Notification("Affectation à la surveillance de l'examen de Mathématiques", dateFormat.parse("2023-12-10 10:00"), false, TypeNotification.AFFECTATION, enseignants.get(1), surveillances.get(1)),
-                new Notification("Affectation à la surveillance de l'examen de Physique", dateFormat.parse("2023-12-10 11:00"), false, TypeNotification.AFFECTATION, enseignants.get(2), surveillances.get(2)),
-                new Notification("Affectation à la surveillance de l'examen de Chimie", dateFormat.parse("2023-12-10 12:00"), false, TypeNotification.AFFECTATION, enseignants.get(3), surveillances.get(3)),
-                new Notification("Affectation à la surveillance de l'examen de Biologie", dateFormat.parse("2023-12-10 13:00"), false, TypeNotification.AFFECTATION, enseignants.get(4), surveillances.get(4)),
+//         // Création de 50 notifications variées
+//         List<Notification> notifications = Arrays.asList(
+//                 // Notifications d'affectation
+//                 new Notification("Affectation à la surveillance de l'examen d'Algorithmique", dateFormat.parse("2023-12-10 09:00"), false, TypeNotification.AFFECTATION, enseignants.get(0), surveillances.get(0)),
+//                 new Notification("Affectation à la surveillance de l'examen de Mathématiques", dateFormat.parse("2023-12-10 10:00"), false, TypeNotification.AFFECTATION, enseignants.get(1), surveillances.get(1)),
+//                 new Notification("Affectation à la surveillance de l'examen de Physique", dateFormat.parse("2023-12-10 11:00"), false, TypeNotification.AFFECTATION, enseignants.get(2), surveillances.get(2)),
+//                 new Notification("Affectation à la surveillance de l'examen de Chimie", dateFormat.parse("2023-12-10 12:00"), false, TypeNotification.AFFECTATION, enseignants.get(3), surveillances.get(3)),
+//                 new Notification("Affectation à la surveillance de l'examen de Biologie", dateFormat.parse("2023-12-10 13:00"), false, TypeNotification.AFFECTATION, enseignants.get(4), surveillances.get(4)),
 
-                // Rappels
-                new Notification("Rappel: Surveillance demain à 08h00 - Salle A101", dateFormat.parse("2023-12-14 16:00"), false, TypeNotification.RAPPEL, enseignants.get(0), surveillances.get(0)),
-                new Notification("Rappel: Surveillance demain à 10h30 - Salle B202", dateFormat.parse("2023-12-14 17:00"), false, TypeNotification.RAPPEL, enseignants.get(1), surveillances.get(1)),
-                new Notification("Rappel: Surveillance demain à 14h00 - Salle C303", dateFormat.parse("2023-12-14 18:00"), false, TypeNotification.RAPPEL, enseignants.get(2), surveillances.get(2)),
-                new Notification("Rappel: Surveillance demain à 08h00 - Salle D404", dateFormat.parse("2023-12-15 16:00"), false, TypeNotification.RAPPEL, enseignants.get(3), surveillances.get(3)),
-                new Notification("Rappel: Surveillance demain à 10h30 - Salle E505", dateFormat.parse("2023-12-15 17:00"), false, TypeNotification.RAPPEL, enseignants.get(4), surveillances.get(4)),
+//                 // Rappels
+//                 new Notification("Rappel: Surveillance demain à 08h00 - Salle A101", dateFormat.parse("2023-12-14 16:00"), false, TypeNotification.RAPPEL, enseignants.get(0), surveillances.get(0)),
+//                 new Notification("Rappel: Surveillance demain à 10h30 - Salle B202", dateFormat.parse("2023-12-14 17:00"), false, TypeNotification.RAPPEL, enseignants.get(1), surveillances.get(1)),
+//                 new Notification("Rappel: Surveillance demain à 14h00 - Salle C303", dateFormat.parse("2023-12-14 18:00"), false, TypeNotification.RAPPEL, enseignants.get(2), surveillances.get(2)),
+//                 new Notification("Rappel: Surveillance demain à 08h00 - Salle D404", dateFormat.parse("2023-12-15 16:00"), false, TypeNotification.RAPPEL, enseignants.get(3), surveillances.get(3)),
+//                 new Notification("Rappel: Surveillance demain à 10h30 - Salle E505", dateFormat.parse("2023-12-15 17:00"), false, TypeNotification.RAPPEL, enseignants.get(4), surveillances.get(4)),
 
-                // Modifications
-                new Notification("Changement de salle pour la surveillance de demain", dateFormat.parse("2023-12-14 15:00"), false, TypeNotification.MODIFICATION, enseignants.get(5), surveillances.get(5)),
-                new Notification("Changement d'horaire pour la surveillance de vendredi", dateFormat.parse("2023-12-14 16:00"), false, TypeNotification.MODIFICATION, enseignants.get(6), surveillances.get(6)),
-                new Notification("Annulation de la surveillance prévue", dateFormat.parse("2023-12-15 10:00"), false, TypeNotification.MODIFICATION, enseignants.get(7), surveillances.get(7)),
-                new Notification("Nouvelle affectation suite à annulation", dateFormat.parse("2023-12-15 11:00"), false, TypeNotification.MODIFICATION, enseignants.get(8), surveillances.get(8)),
-                new Notification("Modification des consignes de surveillance", dateFormat.parse("2023-12-15 12:00"), false, TypeNotification.MODIFICATION, enseignants.get(9), surveillances.get(9)),
+//                 // Modifications
+//                 new Notification("Changement de salle pour la surveillance de demain", dateFormat.parse("2023-12-14 15:00"), false, TypeNotification.MODIFICATION, enseignants.get(5), surveillances.get(5)),
+//                 new Notification("Changement d'horaire pour la surveillance de vendredi", dateFormat.parse("2023-12-14 16:00"), false, TypeNotification.MODIFICATION, enseignants.get(6), surveillances.get(6)),
+//                 new Notification("Annulation de la surveillance prévue", dateFormat.parse("2023-12-15 10:00"), false, TypeNotification.MODIFICATION, enseignants.get(7), surveillances.get(7)),
+//                 new Notification("Nouvelle affectation suite à annulation", dateFormat.parse("2023-12-15 11:00"), false, TypeNotification.MODIFICATION, enseignants.get(8), surveillances.get(8)),
+//                 new Notification("Modification des consignes de surveillance", dateFormat.parse("2023-12-15 12:00"), false, TypeNotification.MODIFICATION, enseignants.get(9), surveillances.get(9)),
 
-                // Notifications générales
-                new Notification("Réunion préparatoire des surveillants - Lundi 13/12 à 14h", dateFormat.parse("2023-12-10 14:00"), false, TypeNotification.AFFECTATION, enseignants.get(0), null),
-                new Notification("Nouvelles consignes sanitaires pour les examens", dateFormat.parse("2023-12-11 09:00"), false, TypeNotification.RAPPEL, enseignants.get(1), null),
-                new Notification("Distribution des feuilles d'émargement", dateFormat.parse("2023-12-12 10:00"), false, TypeNotification.AFFECTATION, enseignants.get(2), null),
-                new Notification("Retour des copies d'examen", dateFormat.parse("2024-01-10 11:00"), false, TypeNotification.MODIFICATION, enseignants.get(3), null),
-                new Notification("Bilan de la session d'examen", dateFormat.parse("2024-01-15 14:00"), false, TypeNotification.ANNULATION, enseignants.get(4), null)
-        );
+//                 // Notifications générales
+//                 new Notification("Réunion préparatoire des surveillants - Lundi 13/12 à 14h", dateFormat.parse("2023-12-10 14:00"), false, TypeNotification.AFFECTATION, enseignants.get(0), null),
+//                 new Notification("Nouvelles consignes sanitaires pour les examens", dateFormat.parse("2023-12-11 09:00"), false, TypeNotification.RAPPEL, enseignants.get(1), null),
+//                 new Notification("Distribution des feuilles d'émargement", dateFormat.parse("2023-12-12 10:00"), false, TypeNotification.AFFECTATION, enseignants.get(2), null),
+//                 new Notification("Retour des copies d'examen", dateFormat.parse("2024-01-10 11:00"), false, TypeNotification.MODIFICATION, enseignants.get(3), null),
+//                 new Notification("Bilan de la session d'examen", dateFormat.parse("2024-01-15 14:00"), false, TypeNotification.ANNULATION, enseignants.get(4), null)
+//         );
 
-        for (Notification notification : notifications) {
-            if (notificationRepository.findByMessageAndDateEnvoi(notification.getMessage(), notification.getDateEnvoi()).isEmpty()) {
-                notificationRepository.save(notification);
-            }
-        }
-    }
+//         for (Notification notification : notifications) {
+//             if (notificationRepository.findByMessageAndDateEnvoi(notification.getMessage(), notification.getDateEnvoi()).isEmpty()) {
+//                 notificationRepository.save(notification);
+//             }
+//         }
+//     }
 }

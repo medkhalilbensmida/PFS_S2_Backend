@@ -12,6 +12,4 @@ public class NotificationDTO {
     private Date dateEnvoi;
     private Boolean estLue;
     private TypeNotification type;
-    private Long enseignantId;
-    private Long surveillanceId;
 }

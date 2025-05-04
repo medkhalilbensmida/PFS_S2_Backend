@@ -34,11 +34,6 @@ public interface SurveillanceRepository extends JpaRepository<Surveillance, Long
 
     List<Surveillance> findBySessionExamenId(Long sessionId);
 
-    @Query("SELECT COUNT(s) > 0 FROM Surveillance s " +
-            "WHERE s.sessionExamen.id = :sessionId " +
-            "AND EXISTS (SELECT 1 FROM Notification n WHERE n.surveillance = s)")
-    boolean existsBySessionExamenIdWithNotifications(@Param("sessionId") Long sessionId);
-
     @Modifying
     @Query("UPDATE Surveillance s SET " +
             "s.dateDebut = :newDateDebut, " +

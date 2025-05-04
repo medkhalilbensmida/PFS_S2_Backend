@@ -19,13 +19,6 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private TypeNotification type;
 
-    @ManyToOne
-    @JoinColumn(name = "enseignant_id")
-    private Enseignant destinataire;
-
-    @ManyToOne
-    @JoinColumn(name = "surveillance_id")
-    private Surveillance surveillance;
 
     private Boolean emailEnvoye = false; 
 
@@ -33,15 +26,26 @@ public class Notification {
     public Notification() {}
 
     // Constructeur avec paramètres
-    public Notification(String message, Date dateEnvoi, Boolean estLue, TypeNotification type, Enseignant destinataire, Surveillance surveillance) {
+    public Notification(String message, Date dateEnvoi, Boolean estLue, TypeNotification type, Enseignant enseignant, Surveillance surveillance) {
         this.message = message;
         this.dateEnvoi = dateEnvoi;
         this.estLue = estLue;
         this.type = type;
-        this.destinataire = destinataire;
-        this.surveillance = surveillance;
+        this.enseignantDestinataire = enseignant;
         this.emailEnvoye = false;
     }
+
+
+    public Notification(String message, Date dateEnvoi, Boolean estLue, TypeNotification type, Administrateur admin, Surveillance surveillance) {
+        this.message = message;
+        this.dateEnvoi = dateEnvoi;
+        this.estLue = estLue;
+        this.type = type;
+        this.adminDestinataire = admin;
+        this.emailEnvoye = false;
+    }
+
+
     // Method to mark email as sent
     public void markEmailAsSent() {
         this.emailEnvoye = true;
@@ -51,4 +55,13 @@ public class Notification {
     protected void onCreate() {
         this.dateEnvoi = new Date();
     }
+
+    @ManyToOne
+    @JoinColumn(name = "enseignant_id")
+    private Enseignant enseignantDestinataire;
+    
+    @ManyToOne
+    @JoinColumn(name = "administrateur_id")
+    private Administrateur adminDestinataire;
+    
 }

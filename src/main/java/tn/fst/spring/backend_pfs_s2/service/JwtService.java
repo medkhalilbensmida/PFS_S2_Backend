@@ -76,6 +76,16 @@ public class JwtService {
         }
     }
 
+    public boolean validateToken(String token) {
+        try {
+            extractUsername(token); // Triggers parsing and validation
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+
     private boolean isTokenExpired(String token) throws ExpiredJwtException, UnsupportedJwtException,
             MalformedJwtException, SignatureException, IllegalArgumentException {
         return extractExpiration(token).before(new Date());
