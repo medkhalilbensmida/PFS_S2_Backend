@@ -236,6 +236,11 @@ public class SurveillanceService {
         // Sauvegarde de la surveillance mise à jour
         Surveillance updatedSurveillance = surveillanceRepository.save(surveillance);
 
+
+        // 3. Notification des enseignants
+        notificationService.sendAssignmentNotification(enseignantPrincipal, surveillance, "principal");
+        notificationService.sendAssignmentNotification(enseignantSecondaire, surveillance, "secondaire");
+
         // TODO: Ajouter la logique de notification ici si nécessaire
         // Exemple:
         // if (enseignantPrincipal != null) {

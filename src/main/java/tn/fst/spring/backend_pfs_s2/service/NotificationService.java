@@ -3,6 +3,7 @@ package tn.fst.spring.backend_pfs_s2.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.Access;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import tn.fst.spring.backend_pfs_s2.controller.NotificationController;
@@ -70,6 +71,35 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setType(TypeNotification.ANNULATION);
         notification.setMessage("La surveillance du " + surveillance.getDateDebut() + " vers " + surveillance.getDateFin() + " a été annulée");
+        notification.setEnseignantDestinataire(enseignant);
+        
+        Notification saved = this.createNotification(notification);
+        
+        // Create DTO
+        Map<String, Object> notificationDto = new HashMap<>();
+        notificationDto.put("id", saved.getId());
+        notificationDto.put("message", saved.getMessage());
+        notificationDto.put("dateEnvoi", saved.getDateEnvoi().getTime());
+        notificationDto.put("estLue", saved.getEstLue());
+        notificationDto.put("type", saved.getType().name());
+        
+        // Send via WebSocket
+        messagingTemplate.convertAndSendToUser(
+            enseignant.getEmail(),
+            "/queue/notifications",
+            notificationDto
+        );
+    }
+
+    public void sendAssignmentNotification( Enseignant enseignant, Surveillance surveillance,String type) {
+        
+        if (enseignant == null || surveillance == null) {
+            return;
+        }
+        
+        Notification notification = new Notification();
+        notification.setType(TypeNotification.AFFECTATION);
+        notification.setMessage("Vous avez été affecté à la surveillance comme professeur "+ type +" du " + surveillance.getDateDebut() + " vers " + surveillance.getDateFin() + " pour la matiere " + surveillance.getMatiere().getNom());
         notification.setEnseignantDestinataire(enseignant);
         
         Notification saved = this.createNotification(notification);
