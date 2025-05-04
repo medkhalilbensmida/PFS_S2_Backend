@@ -418,7 +418,7 @@ public class SurveillanceService {
                             int endYear = Integer.parseInt(years[1]);
 
                             // Get the year from surveillance's session
-                            int surveillanceYear = surveillance.getSessionExamen().getAnnee().getDateDebut().getYear() + 1900;
+                            int surveillanceYear = surveillance.getSessionExamen().getDateDebut().getYear() + 1900;
                             matches = matches && (surveillanceYear == startYear);
                         }
                     }

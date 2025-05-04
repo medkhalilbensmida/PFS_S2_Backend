@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import tn.fst.spring.backend_pfs_s2.dto.MailRequest;
 import tn.fst.spring.backend_pfs_s2.dto.NotificationDTO;
 import tn.fst.spring.backend_pfs_s2.dto.NotificationEmailDTO;
+import tn.fst.spring.backend_pfs_s2.dto.ConvocationEmailDTO;
 import tn.fst.spring.backend_pfs_s2.model.Enseignant;
 import tn.fst.spring.backend_pfs_s2.model.Notification;
 import tn.fst.spring.backend_pfs_s2.model.SessionExamen;
@@ -20,6 +21,9 @@ import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 import tn.fst.spring.backend_pfs_s2.repository.NotificationRepository;
 import tn.fst.spring.backend_pfs_s2.repository.SurveillanceRepository;
 import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository;
+import tn.fst.spring.backend_pfs_s2.service.export.ConvocationService;
+import tn.fst.spring.backend_pfs_s2.service.export.SurveillanceFilterDTO;
+
 
 
 @Service
@@ -30,6 +34,7 @@ public class EmailSendService{
     private final EnseignantRepository enseignantRepository;
     private final SurveillanceRepository surveillanceRepository;
     private final SessionExamenService sessionExamenService;
+    private final ConvocationService convocationService;
    
     
     public void sendEmailAll() {
@@ -169,6 +174,46 @@ public class EmailSendService{
             e.printStackTrace();
             throw new Exception("Failed to send email: " + e.getMessage(), e);
         }
+    }
+
+    public void sendConvocationEmail(ConvocationEmailDTO dto) throws Exception {
+        // Generate the PDF
+        SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+        filterDTO.setAnneeUniversitaire(dto.getAnneeUniversitaire());
+        filterDTO.setSemestre(dto.getSemestre());
+        filterDTO.setTypeSession(dto.getTypeSession());
+
+        Enseignant enseignant = enseignantRepository.findByEmail(dto.getToEmail())
+            .orElseThrow(() -> new IllegalArgumentException("Please verify the email"));
+        byte[] pdfBytes = convocationService.generateConvocation(enseignant.getId(), filterDTO);
+
+        // Prepare email with attachment
+        MailRequest mailRequest = new MailRequest();
+        mailRequest.setToEmail(dto.getToEmail());
+        mailRequest.setSubject(dto.getSubject());
+        mailRequest.setTemplate(dto.getTemplate());
+        mailRequest.setIsHtml(true);
+        
+        // Set context variables for Thymeleaf template
+        Map<String, Object> context = new HashMap<>();
+        context.put("professorName", enseignant.getGrade() + " " + enseignant.getNom() + " " + enseignant.getPrenom());
+        context.put("message", dto.getMessage());
+
+        // Ensure date is properly set (use current date if not provided)
+        Date convocationDate = dto.getDate() != null ? dto.getDate() : new Date();
+        context.put("date", convocationDate);
+    
+
+        mailRequest.setContext(context);
+
+        // Add PDF attachment
+        MailRequest.Attachment attachment = new MailRequest.Attachment();
+        attachment.setFileName("Convocation_" + enseignant.getId() + ".pdf");
+        attachment.setFileData(pdfBytes);
+        mailRequest.setAttachments(List.of(attachment));
+
+        // Send email
+        mailService.sendEmail(mailRequest);
     }
 
     }

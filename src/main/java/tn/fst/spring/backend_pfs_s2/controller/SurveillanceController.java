@@ -6,8 +6,8 @@ import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.backend_pfs_s2.dto.AssignementRequestDTO; // Ajoutez cet import
+import tn.fst.spring.backend_pfs_s2.dto.ConvocationEmailDTO;
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDTO;
-import tn.fst.spring.backend_pfs_s2.model.Surveillance;
 import tn.fst.spring.backend_pfs_s2.service.export.ConvocationService;
 import tn.fst.spring.backend_pfs_s2.dto.SurveillanceDetailsDTO;
 import tn.fst.spring.backend_pfs_s2.model.*; // Assurez-vous que les modèles nécessaires sont importés
@@ -15,6 +15,7 @@ import tn.fst.spring.backend_pfs_s2.repository.EnseignantRepository; // Ajoutez 
 import tn.fst.spring.backend_pfs_s2.repository.MatiereRepository;     // Ajoutez si nécessaire pour la conversion
 import tn.fst.spring.backend_pfs_s2.repository.SalleRepository;       // Ajoutez si nécessaire pour la conversion
 import tn.fst.spring.backend_pfs_s2.repository.SessionExamenRepository; // Ajoutez si nécessaire pour la conversion
+import tn.fst.spring.backend_pfs_s2.service.EmailSendService;
 import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 
 
@@ -22,8 +23,10 @@ import tn.fst.spring.backend_pfs_s2.service.SurveillanceService;
 import jakarta.servlet.http.HttpServletResponse;  // Change this import
 
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import tn.fst.spring.backend_pfs_s2.service.export.SurveillanceFilterDTO;
@@ -39,6 +42,8 @@ public class SurveillanceController {
     @Autowired
     private ConvocationService convocationService;
 
+    private final EmailSendService emailSendService;
+
     // Injectez les repositories si nécessaire pour la conversion dans convertToEntity
     private final SalleRepository salleRepository;
     private final MatiereRepository matiereRepository;
@@ -48,11 +53,13 @@ public class SurveillanceController {
 
     // Modifiez le constructeur pour inclure les nouveaux repositories
     public SurveillanceController(SurveillanceService surveillanceService,
+                                  EmailSendService emailSendService,
                                   SalleRepository salleRepository,
                                   MatiereRepository matiereRepository,
                                   SessionExamenRepository sessionExamenRepository,
                                   EnseignantRepository enseignantRepository) {
         this.surveillanceService = surveillanceService;
+        this.emailSendService = emailSendService;
         this.salleRepository = salleRepository;
         this.matiereRepository = matiereRepository;
         this.sessionExamenRepository = sessionExamenRepository;
@@ -360,4 +367,45 @@ public class SurveillanceController {
             return message;
         }
     }
+
+    // In your Spring controller
+@GetMapping("/teachers-with-surveillances")
+public ResponseEntity<List<Enseignant>> getTeachersWithSurveillances(
+    @RequestParam(required = false) String anneeUniversitaire,
+    @RequestParam(required = false) Semestre semestre,
+    @RequestParam(required = false) TypeSession typeSession) {
+
+    SurveillanceFilterDTO filterDTO = new SurveillanceFilterDTO();
+    filterDTO.setAnneeUniversitaire(anneeUniversitaire);
+    filterDTO.setSemestre(semestre);
+    filterDTO.setTypeSession(typeSession);
+
+    List<Surveillance> surveillances = surveillanceService.filterSurveillances(filterDTO);
+    
+    // Get unique teachers from surveillances
+    Set<Enseignant> teachers = new HashSet<>();
+    for (Surveillance s : surveillances) {
+        if (s.getEnseignantPrincipal() != null) {
+            teachers.add(s.getEnseignantPrincipal());
+        }
+        if (s.getEnseignantSecondaire() != null) {
+            teachers.add(s.getEnseignantSecondaire());
+        }
+    }
+    
+    return ResponseEntity.ok(new ArrayList<>(teachers));
+}
+
+
+@PostMapping("/send-convocation")
+@Secured("ROLE_ADMIN")
+public ResponseEntity<String> sendConvocationEmail(@RequestBody ConvocationEmailDTO dto) {
+    try {
+        emailSendService.sendConvocationEmail(dto);
+        return ResponseEntity.ok("Convocation email sent successfully");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+               .body("Failed to send convocation: " + e.getMessage());
+    }
+}
 }

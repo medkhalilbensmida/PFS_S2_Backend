@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Convocation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .header { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 th:text="${subject}">Convocation de surveillance</h1>
+    </div>
+    
+    <p>Cher(e) <strong th:text="${professorName}">Professeur</strong>,</p>
+    
+    <div th:utext="${message}">
+        <!-- Default message if not provided -->
+        <p>Veuillez trouver ci-joint votre convocation officielle pour les surveillances d'examen.</p>
+    </div>
+    
+    <p>Le fichier PDF joint contient tous les détails de vos surveillances.</p>
+    
+    <div class="footer">
+        <p>Cordialement,<br>
+        <strong>Le service des examens</strong></p>
+        
+        <p>Date d'envoi: <span th:text="${#dates.format(date, 'dd/MM/yyyy')}"></span> à <span th:text="${#dates.format(date, 'HH:mm')}"></span></p>
+    </div>
+</body>
+</html>
